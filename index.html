@@ -1,0 +1,2161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>피크민 데코 컬렉션</title>
+<style>
+  :root{
+    --bg:#f5f2eb; --bg-elev:#ffffff; --text:#2b2b28; --text-dim:#7a756b;
+    --border:#e4ded0; --accent:#3a9d5b; --accent-dim:#cfead9; --met:#c8961e; --pin:#3b82f6;
+    --chip-off:#efece3; --chip-off-border:#d8d2c2;
+    --danger:#c0392b; --shadow:0 1px 3px rgba(0,0,0,.08);
+    --radius:14px; --modal-bg:#ffffff; --overlay:rgba(20,18,12,.45);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1b1a17; --bg-elev:#252420; --text:#efece3; --text-dim:#a39c8c;
+      --border:#3a372f; --accent:#4cbf76; --accent-dim:#1f3a2a; --met:#e0b64a; --pin:#5b9dff;
+      --chip-off:#2c2a24; --chip-off-border:#413d33;
+      --shadow:0 1px 3px rgba(0,0,0,.4); --modal-bg:#252420; --overlay:rgba(0,0,0,.6);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  body{padding-bottom:60px;}
+  header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);
+    padding:calc(10px + env(safe-area-inset-top)) 14px 10px;}
+  h1{font-size:19px;margin:0 0 8px;display:flex;align-items:center;gap:8px;justify-content:space-between;}
+  h1 .title{display:flex;align-items:center;gap:8px;}
+  h1 .emoji{font-size:22px;}
+  #editToggle{border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);
+    border-radius:9px;padding:5px 9px;font-size:12px;font-weight:600;}
+  #editToggle.on{background:var(--met);border-color:var(--met);color:#fff;}
+  .statrow{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+  .statrow .label{font-size:11.5px;color:var(--text-dim);white-space:nowrap;min-width:76px;}
+  .progress{flex:1;height:7px;border-radius:5px;background:var(--chip-off);overflow:hidden;}
+  .progress > div{height:100%;background:var(--accent);border-radius:5px;transition:width .25s;}
+  .progress.goal > div{background:var(--met);}
+  .statrow .pct{font-size:11.5px;font-weight:600;color:var(--accent);min-width:60px;text-align:right;}
+  .statrow.goal .pct{color:var(--met);}
+  .totalPikminRow{font-size:11.5px;color:var(--text-dim);margin:2px 0 4px;}
+  .totalPikminRow b{color:var(--text);font-weight:700;}
+  .colorsummary{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 4px;margin-bottom:2px;-webkit-overflow-scrolling:touch;}
+  .colorsummary::-webkit-scrollbar{display:none;}
+  .cs-pill{flex:0 0 auto;border:1px solid var(--border);background:var(--bg-elev);border-radius:11px;
+    padding:6px 9px;text-align:center;min-width:64px;position:relative;cursor:pointer;}
+  .cs-pill.active{border-color:var(--accent);border-width:2px;padding:5px 8px;background:var(--accent-dim);}
+  .cs-pill .sw{width:14px;height:14px;border-radius:50%;margin:0 auto 3px;}
+  .cs-pill .n{font-size:13px;font-weight:700;}
+  .cs-pill .k{font-size:9.5px;color:var(--text-dim);}
+  .cs-pill .g{font-size:9px;color:var(--met);font-weight:700;margin-top:1px;}
+  .cs-pill .dw{font-size:9px;color:var(--pin);font-weight:700;margin-top:1px;}
+  .cs-pill .csDel{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;
+    background:var(--danger);color:#fff;font-size:10px;line-height:16px;border:none;padding:0;}
+  .cs-addpill{flex:0 0 auto;border:1px dashed var(--border);background:transparent;color:var(--text-dim);
+    border-radius:11px;padding:6px 12px;font-size:18px;min-width:44px;}
+  .tabs{display:flex;gap:6px;margin:8px 0;}
+  .tab-btn{flex:1;padding:8px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg-elev);
+    color:var(--text-dim);font-size:13.5px;font-weight:600;}
+  .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tabStats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:11.5px;
+    color:var(--text-dim);background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;
+    padding:6px 10px;margin-bottom:8px;}
+  .tabStats b{color:var(--text);font-weight:700;}
+  .tabStats .ts-deco{color:var(--accent);font-weight:700;}
+  .tabStats .ts-wait{color:color-mix(in srgb, var(--met) 80%, var(--text-dim));font-weight:700;}
+  .searchResultInfo{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;}
+  .dashboard{padding:4px 0 20px;grid-column:1/-1;}
+  .dash-tablewrap{overflow-x:auto;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;}
+  .dash-table{border-collapse:collapse;width:100%;font-size:11.5px;white-space:nowrap;}
+  .dash-table th, .dash-table td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);}
+  .dash-table th:first-child, .dash-table td:first-child{text-align:left;position:sticky;left:0;
+    background:var(--bg-elev);}
+  .dash-table thead th{background:var(--bg-elev);font-weight:700;color:var(--text-dim);}
+  .dash-sect td{background:color-mix(in srgb, var(--accent) 12%, var(--bg-elev));font-weight:700;
+    color:var(--text);position:static;}
+  .dash-label{color:var(--text-dim);}
+  .dash-sum{font-weight:700;color:var(--text);}
+  .dash-section-title{font-size:13px;font-weight:700;margin:14px 2px 6px;}
+  .dash-listwrap{overflow-x:auto;margin-bottom:10px;border:1px solid var(--border);border-radius:10px;}
+  .dash-list{border-collapse:collapse;width:100%;font-size:12px;}
+  .dash-list th, .dash-list td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;
+    white-space:nowrap;}
+  .dash-empty{font-size:12px;color:var(--text-dim);padding:4px 2px 14px;}
+  .dash-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;
+    border:1px solid rgba(0,0,0,.15);vertical-align:middle;flex-shrink:0;}
+  .dash-table thead th{white-space:nowrap;}
+  .dash-dots{display:flex;flex-wrap:nowrap;gap:3px;align-items:center;}
+  .dash-cat{vertical-align:top;font-weight:700;color:var(--text);white-space:nowrap;}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .search{flex:1;min-width:110px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg-elev);color:var(--text);font-size:14px;}
+  .icon-btn{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg-elev);
+    color:var(--text-dim);font-size:12.5px;white-space:nowrap;}
+  .icon-btn.on{color:var(--accent);border-color:var(--accent);}
+  main{padding:10px 12px 30px;display:flex;flex-direction:column;gap:10px;}
+  /* 화면이 넓어지면 카테고리 카드를 최대 2열까지만 - 아이템 카드처럼 더 늘어나지
+     않고 딱 2열에서 고정된다(3열 이상은 카드 하나가 너무 좁아져 오히려 안 좋음). */
+  @media (min-width:700px){
+    main{display:grid;grid-template-columns:repeat(2,1fr);align-items:start;}
+  }
+  .addLocBtn{display:block;width:100%;padding:10px;border-radius:12px;border:1px dashed var(--border);
+    background:transparent;color:var(--text-dim);font-size:13px;grid-column:1/-1;}
+  details.loc{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;}
+  details.loc summary{list-style:none;cursor:pointer;padding:11px 14px;}
+  details.loc summary::-webkit-details-marker{display:none;}
+  .loc-row{display:flex;align-items:center;justify-content:space-between;gap:8px 6px;flex-wrap:wrap;}
+  .loc-title{font-size:14.5px;font-weight:700;flex:1;min-width:60px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .loc-badge{font-size:13px;line-height:1;}
+  details.loc.loc-complete{border-color:var(--accent);}
+  details.loc.loc-complete .loc-title{color:var(--accent);}
+  details.loc.loc-goalmet{border-color:var(--met);}
+  details.loc.loc-goalmet .loc-title{color:var(--met);}
+  details.loc.loc-pinned{border-color:color-mix(in srgb, var(--pin) 45%, var(--border));
+    background:color-mix(in srgb, var(--pin) 5%, var(--bg-elev));}
+  details.loc.loc-pinned .loc-title{color:color-mix(in srgb, var(--pin) 65%, var(--text));}
+  .loc-meta{display:flex;align-items:center;gap:8px;}
+  .loc-count{font-size:11.5px;color:var(--text-dim);white-space:nowrap;}
+  .chev{width:9px;height:9px;border-right:2px solid var(--text-dim);border-bottom:2px solid var(--text-dim);
+    transform:rotate(-45deg);transition:transform .2s;margin-right:2px;flex-shrink:0;}
+  details.loc[open] .chev{transform:rotate(45deg);}
+  .loc-progress{height:4px;border-radius:3px;background:var(--chip-off);overflow:hidden;margin-top:9px;}
+  .loc-progress > div{height:100%;background:var(--met);}
+  details.loc[open] .loc-progress, details.loc.loc-complete .loc-progress{display:none;}
+  .loc-almost{margin-top:8px;padding:6px 9px;border-radius:9px;font-size:11.5px;font-weight:700;
+    background:color-mix(in srgb, var(--ac,var(--met)) 16%, transparent);
+    color:color-mix(in srgb, var(--ac,var(--met)) 70%, var(--text));
+    border:1px solid color-mix(in srgb, var(--ac,var(--met)) 45%, transparent);}
+  .loc-almost b{text-decoration:underline;}
+  .items{padding:4px 10px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;align-items:start;}
+  .item{border:1px solid var(--border);border-radius:12px;padding:9px;background:var(--bg);position:relative;}
+  .item.complete{border-color:var(--accent);}
+  .item.goalmet{border-color:var(--met);background:linear-gradient(180deg,color-mix(in srgb,var(--met) 10%,transparent),transparent);}
+  .item.rare-item{border-style:dashed;border-color:color-mix(in srgb, var(--pin) 55%, var(--border));}
+  .rare-badge{border:1px solid color-mix(in srgb, var(--pin) 55%, var(--border));background:color-mix(in srgb, var(--pin) 12%, var(--bg-elev));
+    color:color-mix(in srgb, var(--pin) 70%, var(--text));border-radius:8px;padding:2px 6px;font-size:10.5px;font-weight:700;}
+  .rare-current{font-size:13px;margin-bottom:4px;}
+  .rare-current b{color:var(--pin);}
+  .quickadd-row{display:flex;gap:6px;margin:6px 0 4px;}
+  .quickAddBtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid var(--border);background:var(--bg-elev);
+    color:var(--text);font-size:12.5px;font-weight:600;}
+  .modal .row #fRareLevel{width:70px;flex-shrink:0;}
+  .modal .row #fRareSnap{flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-elev);
+    color:var(--text);font-size:12px;}
+  .item-head{display:flex;align-items:center;gap:7px 6px;margin-bottom:7px;flex-wrap:wrap;}
+  .waitItemBtn{flex-shrink:0;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);
+    border-radius:8px;padding:2px 5px;font-size:10.5px;line-height:1.3;font-weight:700;}
+  .item-name{font-size:12.5px;font-weight:600;line-height:1.25;flex:1;min-width:60px;}
+  .edit-btns{display:flex;gap:3px;}
+  .edit-btns button{width:20px;height:20px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elev);
+    font-size:10px;padding:0;line-height:1;color:var(--text-dim);}
+  .edit-btns button.del{color:var(--danger);border-color:var(--danger);}
+  .pinGroupBtn.on{background:var(--met);border-color:var(--met);color:#fff;}
+  .rareUnlockToggleBtn{width:auto!important;padding:0 6px;font-size:10px;white-space:nowrap;
+    color:var(--text-dim);}
+  .rareUnlockToggleBtn.on{background:color-mix(in srgb, var(--pin) 15%, var(--bg-elev));
+    border-color:var(--pin);color:var(--pin);}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 8px;row-gap:12px;justify-items:center;}
+  .chip{width:34px;height:34px;border-radius:10px;padding:3px;border:none;background:var(--chip-off-border);
+    position:relative;}
+  .chip-plus{display:block;width:100%;height:100%;background:transparent;border:none;padding:0;margin:0;
+    cursor:pointer;-webkit-appearance:none;appearance:none;}
+  .chip .inner{width:100%;height:100%;border-radius:7px;background:var(--chip-off);
+    display:flex;align-items:center;justify-content:center;}
+  .chip .dot{width:12px;height:12px;border-radius:50%;background:var(--dotcolor,#999);}
+  .chip .n{position:absolute;bottom:-3px;right:-3px;background:var(--bg-elev);color:var(--text);
+    font-size:9px;font-weight:800;border-radius:6px;min-width:14px;padding:0 2px;line-height:14px;
+    border:1px solid var(--border);text-align:center;pointer-events:none;}
+  .chip.cleared{background:var(--accent);}
+  .chip.cleared .n{color:var(--accent);}
+  .chip.met{background:var(--met);}
+  .chip.met .n{background:var(--met);color:#fff;border-color:var(--met);}
+  .chip-minus{position:absolute;top:-7px;left:-7px;width:18px;height:18px;border-radius:50%;
+    background:var(--bg-elev);color:var(--text-dim);border:1px solid var(--border);
+    font-size:12px;line-height:1;padding:0;z-index:2;font-weight:700;-webkit-appearance:none;appearance:none;}
+  .chip-minus:active{background:var(--danger);color:#fff;border-color:var(--danger);}
+  .chip-idx{position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;
+    background:var(--pin);color:#fff;font-size:8.5px;font-weight:800;line-height:14px;
+    text-align:center;z-index:2;pointer-events:none;}
+  .chip-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .chip-reorder{display:flex;gap:4px;}
+  .chipMoveBtn{width:28px;height:26px;border-radius:7px;border:1px solid var(--border);
+    background:var(--bg-elev);color:var(--text);font-size:15px;line-height:1;padding:0;
+    font-weight:700;-webkit-appearance:none;appearance:none;touch-action:manipulation;}
+  .chipMoveBtn:active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .chipMoveBtn:disabled{opacity:.3;}
+  .footnote{font-size:10px;color:var(--text-dim);text-align:center;margin:2px 0 8px;}
+  footer.bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg-elev);border-top:1px solid var(--border);
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:10;}
+  footer.bar button{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg);
+    color:var(--text);font-size:12px;font-weight:600;}
+  footer.bar button.danger{color:var(--danger);border-color:var(--danger);}
+  .empty{text-align:center;color:var(--text-dim);font-size:13px;padding:30px 10px;grid-column:1/-1;}
+  input[type=file]{display:none;}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:var(--overlay);z-index:100;display:flex;align-items:flex-end;
+    justify-content:center;}
+  @media (min-width:560px){ .overlay{align-items:center;} }
+  .modal{background:var(--modal-bg);width:100%;max-width:420px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+    max-height:85vh;overflow-y:auto;}
+  @media (min-width:560px){ .modal{border-radius:16px;} }
+  .modal h3{margin:0 0 12px;font-size:15px;}
+  .modal label{display:block;font-size:12px;color:var(--text-dim);margin:10px 0 4px;}
+  .modal input[type=text],.modal input[type=number]{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);
+    background:var(--bg);color:var(--text);font-size:14px;}
+  .modal input[type=color]{width:44px;height:34px;border:1px solid var(--border);border-radius:8px;padding:2px;background:var(--bg);}
+  .modal .colorgrid{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+  .modal .colorchoice{display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:9px;
+    padding:6px 9px;font-size:12.5px;background:var(--bg);}
+  .modal .colorchoice .sw{width:12px;height:12px;border-radius:50%;}
+  .modal .colorchoice input{margin:0;}
+  .modal .colorTargetInput{display:none;width:34px;padding:2px 4px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg-elev);color:var(--text);font-size:12px;}
+  .modal .customTargetsOn .colorTargetInput{display:inline-block;}
+  .modal .customToggleRow{display:flex;align-items:flex-start;gap:7px;margin-top:10px;font-size:11.5px;
+    color:var(--text-dim);line-height:1.4;}
+  .modal .customToggleRow input{margin-top:2px;}
+  .modal .waiting-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+  .modal .waiting-row{display:flex;align-items:center;gap:6px;font-size:12.5px;border:1px solid var(--border);
+    border-radius:9px;padding:6px 8px;background:var(--bg);}
+  .modal .waiting-row .sw{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .modal .waiting-row input{width:56px;margin-left:auto;padding:4px 6px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg-elev);color:var(--text);font-size:13px;text-align:right;}
+  .modal .waiting-hint{font-size:11px;color:var(--text-dim);margin-top:10px;line-height:1.4;}
+  .headcount-line{font-size:10.5px;color:var(--text-dim);white-space:nowrap;}
+  .item .headcount-line{margin:-3px 0 6px;}
+  summary .headcount-line{margin-top:2px;font-size:11px;}
+  .hc-deco{color:var(--accent);font-weight:600;}
+  .hc-wait{color:color-mix(in srgb, var(--met) 80%, var(--text-dim));font-weight:600;}
+  .modal .row{display:flex;gap:8px;align-items:center;}
+  .modal .actions{display:flex;gap:8px;margin-top:16px;}
+  .modal .actions button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg);color:var(--text);font-size:13.5px;font-weight:600;}
+  .modal .actions button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .modal .actions button.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    <span class="title"><span class="emoji">🌺</span>피크민 데코 컬렉션</span>
+    <button id="editToggle">✏️ 편집</button>
+  </h1>
+  <div class="statrow">
+    <span class="label">종류 보유</span>
+    <div class="progress"><div id="existBar" style="width:0%"></div></div>
+    <span class="pct" id="existPct">0/0</span>
+  </div>
+  <div class="statrow goal">
+    <span class="label">5마리 달성</span>
+    <div class="progress goal"><div id="goalBar" style="width:0%"></div></div>
+    <span class="pct" id="goalPct">0/0</span>
+  </div>
+  <div class="totalPikminRow" id="totalPikminRow">총 보유 피크민 <b id="totalPikminText">0마리</b></div>
+  <div class="colorsummary" id="colorSummary"></div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="loc" id="tabLoc">위치별</button>
+    <button class="tab-btn" data-tab="special" id="tabSpecial">스페셜</button>
+    <button class="tab-btn" data-tab="dashboard" id="tabDashboard">현황판</button>
+  </div>
+  <div class="tabStats" id="tabStats"></div>
+  <div class="toolbar" id="toolbarRow">
+    <input class="search" id="search" type="search" placeholder="검색… (예: 빨강&클로버, !데코)">
+    <button class="icon-btn" id="filterBtn">미완료만</button>
+    <button class="icon-btn" id="expandBtn">모두 펼치기</button>
+  </div>
+  <div class="searchResultInfo" id="searchResultInfo" style="display:none;"></div>
+</header>
+
+<main id="main"></main>
+
+<footer class="bar">
+  <button id="exportBtn">📤 내보내기</button>
+  <button id="importBtn">📥 가져오기</button>
+  <button class="danger" id="resetBtn">초기화</button>
+</footer>
+<input type="file" id="importFile" accept=".json,application/json,text/plain,text/json">
+
+<div id="modalRoot"></div>
+
+<script id="catalog-data" type="application/json">{"version":2,"colors":[{"key":"빨강","hex":"#e5484d"},{"key":"노랑","hex":"#eab308"},{"key":"파랑","hex":"#3b82f6"},{"key":"보라","hex":"#a855f7"},{"key":"하양","hex":"#e5e7eb"},{"key":"날개","hex":"#f472b6"},{"key":"바위","hex":"#8a7f6d"},{"key":"얼음","hex":"#22d3ee"}],"goal":5,"locations":[{"id":1,"name":"레스토랑","items":[{"id":"L1-0","name":"셰프 모자(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L1-1","name":"셰프 모자","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":2,"name":"카페","items":[{"id":"L2-0","name":"커피 잔(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"isRare":true},{"id":"L2-1","name":"커피 잔","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":3,"name":"디저트가게","items":[{"id":"L3-0","name":"마카롱","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L3-1","name":"도넛","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":4,"name":"영화관","items":[{"id":"L4-0","name":"팝콘","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":5,"name":"약국","items":[{"id":"U-mthcj0a8rljag","name":"칫솔(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L5-0","name":"칫솔","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":6,"name":"동물원","items":[{"id":"L6-0","name":"민들레","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":7,"name":"숲","items":[{"id":"U-mtuvtw58poc3w","name":"사슴벌레(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"U-mtuvtxfdmwmfi","name":"도토리(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L7-0","name":"사슴벌레","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"L7-1","name":"도토리","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":8,"name":"물가","items":[{"id":"L8-0","name":"루어(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"isRare":true},{"id":"L8-1","name":"루어","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":9,"name":"우체국","items":[{"id":"L9-0","name":"우표","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":10,"name":"미술관","items":[{"id":"L10-0","name":"액자","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":11,"name":"공항","items":[{"id":"L11-0","name":"장난감 비행기","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthcq0rz54njc","name":"공항 수화물 태그","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":12,"name":"역","items":[{"id":"U-mthcqt6yzln8g","name":"티켓(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L12-0","name":"종이기차","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L12-1","name":"티켓","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"U-mthinlt5cnf0r","name":"골드 티켓","colors":["빨강"],"optional":true}]},{"id":13,"name":"해변","items":[{"id":"L13-0","name":"조개껍데기","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":14,"name":"햄버거가게","items":[{"id":"L14-0","name":"햄버거","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":15,"name":"편의점","items":[{"id":"L15-0","name":"병뚜껑","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L15-1","name":"과자","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":16,"name":"슈퍼마켓","items":[{"id":"L16-0","name":"바나나(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"isRare":true},{"id":"L16-1","name":"버섯","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L16-2","name":"바나나","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":17,"name":"베이커리","items":[{"id":"L17-0","name":"바게트(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"isRare":true},{"id":"L17-1","name":"바게트","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"U-mtuvv4600s0b8","name":"페이스트리","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":18,"name":"미용실","items":[{"id":"L18-0","name":"가위(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"isRare":true},{"id":"L18-1","name":"가위","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":19,"name":"패션","items":[{"id":"L19-0","name":"머리끈","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":20,"name":"공원","items":[{"id":"U-mthd6231pgm4o","name":"클로버(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"U-mthd6ged4nkp1","name":"네잎클로버(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L20-0","name":"클로버","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"L20-1","name":"네잎클로버","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":21,"name":"도서관/서점","items":[{"id":"L21-0","name":"작은 책","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":22,"name":"길거리","items":[{"id":"L22-0","name":"코인(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L22-1","name":"스티커1(녹)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"L22-2","name":"스티커2(청)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"L22-3","name":"스티커3(황)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"L22-4","name":"코인","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":23,"name":"초밥집","items":[{"id":"L23-0","name":"초밥","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":24,"name":"산","items":[{"id":"L24-0","name":"산 배지","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":25,"name":"스타디움","items":[{"id":"U-mthdlbnn0se1d","name":"스타디움 열쇠고리(희귀)","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"],"isRare":true},{"id":"L25-0","name":"스타디움 열쇠고리","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":26,"name":"비오는날","items":[{"id":"L26-0","name":"잎사귀 모자(1)","colors":["파랑"],"colorTargets":{"파랑":1}},{"id":"U-mthgyxotklv6g","name":"잎사귀 모자(2)","colors":["파랑"],"colorTargets":{"파랑":1}},{"id":"U-mthgyxggjjvm0","name":"잎사귀 모자(3)","colors":["파랑"],"colorTargets":{"파랑":1}}]},{"id":27,"name":"눈오는날","items":[{"id":"L27-0","name":"눈","colors":["파랑","하양","얼음"]}]},{"id":28,"name":"테마파크","items":[{"id":"L28-0","name":"테마파크 입장권(1)","colors":["빨강","노랑","파랑"]},{"id":"U-mthgyo5hcty35","name":"테마파크 입장권(2)","colors":["빨강","노랑","파랑"]}]},{"id":29,"name":"버스정류장","items":[{"id":"L29-0","name":"버스 종이모형","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":30,"name":"이탈리안 레스토랑","items":[{"id":"L30-0","name":"피자","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L30-1","name":"파스타","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":31,"name":"라멘 가게","items":[{"id":"L31-0","name":"라멘 열쇠고리","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":32,"name":"다리","items":[{"id":"L32-0","name":"다리 배지","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":33,"name":"호텔","items":[{"id":"L33-0","name":"호텔 비품","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":34,"name":"화장품 가게","items":[{"id":"L34-0","name":"화장품","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":35,"name":"제단과 사찰 (일본 한정)","items":[{"id":"L35-0","name":"운세(대길)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L35-1","name":"운세(길)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L35-2","name":"운세(중길)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L35-3","name":"운세(소길)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"L35-4","name":"운세(말길)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":36,"name":"전자제품 매장","items":[{"id":"L36-0","name":"전지(1)","colors":["노랑"]},{"id":"L36-1","name":"전지(2)","colors":["노랑"]},{"id":"U-mthdvp4w0hxce","name":"전지(3)","colors":["노랑"]},{"id":"U-mthdvsl2du6kb","name":"전지(4)","colors":["노랑"]},{"id":"U-mthdvw4wjy8ge","name":"전지(5)","colors":["노랑"]},{"id":"U-mthdvzt9hsynf","name":"전지(6)","colors":["노랑"]},{"id":"U-mthdw6m9a38sf","name":"장식조명(1)","colors":["노랑"]},{"id":"U-mthdw9zadrqso","name":"장식조명(2)","colors":["노랑"]}]},{"id":37,"name":"카레 레스토랑","items":[{"id":"L37-0","name":"카레 그릇","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":38,"name":"공구점","items":[{"id":"L38-0","name":"공구","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":39,"name":"대학 & 전문대학","items":[{"id":"L39-0","name":"대학 & 전문대학","colors":["빨강","노랑","파랑"]}]},{"id":40,"name":"맥시코 레스토랑","items":[{"id":"L40-0","name":"타코","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":41,"name":"빨레방 & 세탁소","items":[{"id":"L41-0","name":"세탁용품","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":42,"name":"한식 레스토랑","items":[{"id":"L42-0","name":"김치","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":43,"name":"문구점","items":[{"id":"U-mthe08skgfsz8","name":"문구","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]}],"specialGroups":[{"id":"sg-mthez4xahm5n6","name":"마리오 모자","items":[{"id":"S-0","name":"마리오 모자","colors":["빨강","노랑","파랑","보라"]}]},{"id":"sg-mthez4xatpp32","name":"설날 장식물","items":[{"id":"S-1","name":"빨강","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mtheztwn4wxi7","name":"금색","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa96a2m","name":"체스 말","items":[{"id":"S-3","name":"백말","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthf1zhgd49nu","name":"흑말","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xaj1qex","name":"핑거보드","items":[{"id":"S-4","name":"핑거보드","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa20jh3","name":"화투","items":[{"id":"U-mtihbaw2nrwp7","name":"볼륨1","colors":["빨강","노랑","파랑","보라"],"colorTargets":{"빨강":6,"노랑":6,"파랑":6,"보라":6},"comboOrder":["빨강","보라","바위","노랑"]},{"id":"U-mtihdayo3zgdp","name":"볼륨2","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"colorTargets":{"빨강":2,"노랑":2,"파랑":2,"보라":2,"하양":2,"날개":3,"바위":3},"comboOrder":["빨강","노랑","파랑"]}]},{"id":"sg-mthez4xayc1wi","name":"핼러윈","items":[{"id":"S-7","name":"잭 오 랜턴","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthf5xsjh01ph","name":"핼로윈 간식","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthf6exkkzr8l","name":"핼러윈 조명","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa115gh","name":"기념 이벤트","items":[{"id":"S-10","name":"1주년 간식","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthg8r8nqjh2e","name":"3주년 컵케이크","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthgfdclxnmce","name":"4주년 꽃 상자","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]},{"id":"U-mthgftsax0lqq","name":"4주년 간식","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa4kmnq","name":"코파이 우주복","items":[{"id":"S-11","name":"코파이 우주복","colors":["빨강","노랑","파랑"]}]},{"id":"sg-mthez4xa570ha","name":"손모아장갑","items":[{"id":"S-12","name":"손모아장갑","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xak0enm","name":"안경","items":[{"id":"S-13","name":"2023 안경","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthf9rmlbyooo","name":"2024 안경","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xaa5bd2","name":"기념 스티커","items":[{"id":"S-15","name":"밸런타인 스티커","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfbdkl4enrq","name":"화이트데이 스티커","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfbpckfbmvg","name":"선물 스티커(금색)","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xafsp6p","name":"부활절","items":[{"id":"S-18","name":"이스터 에그","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfdeclwrnzf","name":"토끼 달걀","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xauu7pg","name":"운동화 열쇠고리","items":[{"id":"S-20","name":"운동화 열쇠고리","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa9h145","name":"피크민 4","items":[{"id":"S-21","name":"피크민 4 우주선","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfetut1gqg2","name":"피크민 4 장난감","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthez4xa67k2a","name":"마작패","items":[{"id":"S-23","name":"만수패","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"colorTargets":{"빨강":1,"노랑":1,"파랑":1,"보라":2,"하양":2,"날개":1,"바위":1},"comboOrder":["빨강","하양::0","노랑","파랑","하양::1","보라::0","바위","날개","보라::1"]},{"id":"U-mtif10awtugkp","name":"통수패","colors":["파랑","날개"],"colorTargets":{"파랑":1,"날개":1}},{"id":"U-mtif1n1qt2r7q","name":"삭수패","colors":["노랑","파랑","보라","하양","날개","바위"],"colorTargets":{"노랑":2,"파랑":1,"보라":1,"하양":2,"날개":1,"바위":2},"comboOrder":["노랑::0","하양::0","노랑::1","파랑","하양::1","보라","바위::0","날개","바위::1"]},{"id":"U-mtif4iuxwvta6","name":"풍패","colors":["보라","하양","날개","바위"],"colorTargets":{"보라":1,"하양":1,"날개":1,"바위":1},"comboOrder":["보라","날개","하양","바위"]},{"id":"U-mtif4rczulsg1","name":"삼원패","colors":["빨강","노랑","파랑"],"colorTargets":{"빨강":1,"노랑":1,"파랑":1},"comboOrder":["노랑","빨강","파랑"]}]},{"id":"sg-mthez4xa1308q","name":"아이스크림","items":[{"id":"S-24","name":"클레식","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfkeitrtcws","name":"2024맛","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfjujpw6159","name":"엑스트라 플레이버","colors":["얼음"]}]},{"id":"sg-mthez4xasaeb0","name":"퍼즐","items":[{"id":"S-27","name":"2021년 가을추억","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfu02dtc2d6","name":"2022년 여름추억","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfujeib6ly6","name":"2023년 여름추억","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfuyvgzb1hi","name":"2024년 가을추억","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xade20j","name":"계절 스티커","items":[{"id":"S-31","name":"봄","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfwcm489k55","name":"여름","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfwd867jscw","name":"가을","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"comboOrder":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthfwlpvosd7e","name":"겨울","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}],"pinned":true},{"id":"sg-mthez4xaxeojp","name":"트럼프 카드","items":[{"id":"U-mthg39fefienn","name":"클럽","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"colorTargets":{"빨강":2,"노랑":2,"파랑":2,"보라":2,"하양":1,"날개":2,"바위":2},"comboOrder":["파랑::0","날개::0","빨강::0","노랑::0","빨강::1","바위::0","날개::1","파랑::1","보라::0","바위::1","노랑::1","하양","보라::1"]},{"id":"U-mthg463wsnm88","name":"다이아","colors":["빨강","노랑","파랑","보라","하양","날개","바위"],"colorTargets":{"빨강":2,"노랑":2,"파랑":2,"보라":1,"하양":2,"날개":2,"바위":2},"comboOrder":["빨강::0","노랑::0","파랑::0","하양::0","날개::0","보라","바위::0","빨강::1","노랑::1","파랑::1","하양::1","날개::1","바위::1"]},{"id":"U-mthg4jkk2np1l","name":"조커","colors":["보라"]}]},{"id":"sg-mthez4xayqnut","name":"치즈","items":[{"id":"S-36","name":"치즈","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xalvvn0","name":"산호","items":[{"id":"S-37","name":"산호","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xab0dy9","name":"페인트","items":[{"id":"S-38","name":"페인트","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xajw06i","name":"로제트","items":[{"id":"S-39","name":"빨강","colors":["빨강"]},{"id":"U-mthg76hfs6mcr","name":"노랑","colors":["노랑"]},{"id":"U-mthg7fv14kvw2","name":"보라","colors":["보라"]}]},{"id":"sg-mthez4xaifks2","name":"장식","items":[{"id":"S-42","name":"방울 장식","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthggutcnrqyx","name":"2025 장식","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthez4xaxnmqi","name":"2025 폭죽","items":[{"id":"S-43","name":"2025 폭죽","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa04zgc","name":"초콜릿","items":[{"id":"S-44","name":"초콜릿","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthgiuh4pkiq9","name":"2026 초콜릿","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthez4xat94sn","name":"리우 카니발","items":[{"id":"S-45","name":"리우 카니발","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa4q5ci","name":"애프터눈 티","items":[{"id":"S-46","name":"애프터눈 티","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa7wp07","name":"닌텐도 콘솔 1980~1995","items":[{"id":"S-47","name":"닌텐도 콘솔 1980~1995","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xa72lme","name":"미니어처 악기","items":[{"id":"S-48","name":"브라스 밴드","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]},{"id":"U-mthgnbwk25urv","name":"오케스트라","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthez4xaqg2rr","name":"서프보드 열쇠고리","items":[{"id":"S-49","name":"서프보드 열쇠고리","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xatcs26","name":"빙수","items":[{"id":"S-50","name":"빙수","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthez4xaynpxl","name":"월병","items":[{"id":"S-51","name":"월병","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}],"pinned":true},{"id":"sg-mthez4xaos079","name":"사진 버튼","items":[{"id":"S-52","name":"사진 버튼","colors":["빨강"]}]},{"id":"sg-mthez4xaa3tp8","name":"칼라베라","items":[{"id":"S-53","name":"칼라베라","colors":["빨강","노랑","파랑","보라","하양","날개","바위"]}]},{"id":"sg-mthez4xada7y6","name":"쪽쪽이","items":[{"id":"S-57","name":"쪽쪽이","colors":["빨강"]}]},{"id":"sg-mthghxklclsx4","name":"오세치","items":[{"id":"U-mthgibiqwzzrv","name":"오세치","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthgjncggtq4z","name":"색색 가루","items":[{"id":"U-mthgjydl3qrhs","name":"색색 가루","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthgkrzplmjl2","name":"클롬펜 열쇠고리","items":[{"id":"U-mthgl1vghirj5","name":"클롬펜 열쇠고리","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthglplhixlhv","name":"게임 팩","items":[{"id":"U-mthglybo9qqdl","name":"게임 팩","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthgmgcrw30gs","name":"화관","items":[{"id":"U-mthgmo489djjr","name":"화관","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthgnyofvd56u","name":"발리 조각물","items":[{"id":"U-mthgo5yq8y039","name":"발리 조각물","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}]},{"id":"sg-mthgokbf52x7i","name":"소시지","items":[{"id":"U-mthgot1rqngn6","name":"소시지","colors":["빨강","노랑","파랑","보라","하양","날개","바위","얼음"]}],"pinned":true},{"id":"sg-mthez4xaqegts","name":"금색 장난감 비행기","items":[{"id":"S-59","name":"금색 장난감 비행기","colors":["노랑"]}]}]}</script>
+<script>
+(function(){
+  "use strict";
+  var DEFAULT_CATALOG = JSON.parse(document.getElementById('catalog-data').textContent);
+  var CATALOG_KEY = 'pikminDecoCatalog_v2';
+  var STATE_KEY = 'pikminDecoState_v2';
+
+  function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+  function uid(prefix){
+    return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  }
+  // 스페셜 데코는 원래 "카테고리 이름 = 데코 이름"이었던 항목들이라 (마리오 모자,
+  // 화투(볼륨1) 등), 위치 탭처럼 데코 하나당 카테고리 하나로 나눠준다. 다중 세트로
+  // 쪼갠 항목(예: "화투(볼륨1) #1"...)은 " #N" 접미사를 떼고 원래 이름으로 다시 묶는다.
+  function regroupSpecialByName(items){
+    var order = [];
+    var map = {};
+    (items || []).forEach(function(it){
+      var base = it.name.replace(/ #\d+$/, '');
+      if(!map[base]){ map[base] = []; order.push(base); }
+      map[base].push(it);
+    });
+    return order.map(function(name){ return {id: uid('sg'), name: name, items: map[name]}; });
+  }
+
+  var CATALOG;
+  try {
+    var stored = localStorage.getItem(CATALOG_KEY);
+    CATALOG = stored ? JSON.parse(stored) : deepClone(DEFAULT_CATALOG);
+  } catch(e){ CATALOG = deepClone(DEFAULT_CATALOG); }
+  if(!CATALOG.goal) CATALOG.goal = 5;
+  if(!CATALOG.colors) CATALOG.colors = deepClone(DEFAULT_CATALOG.colors);
+  if(!CATALOG.specialGroups){
+    // first-time migration from the very original flat array
+    CATALOG.specialGroups = regroupSpecialByName(CATALOG.special || []);
+  } else if(CATALOG.specialGroups.length === 1 && CATALOG.specialGroups[0].id === 'sg-1' && CATALOG.specialGroups[0].name === '스페셜'){
+    // one-time fix: an earlier version of this app lumped every special deco
+    // into a single "스페셜" bucket - split it back into one category per deco.
+    CATALOG.specialGroups = regroupSpecialByName(CATALOG.specialGroups[0].items);
+  }
+  // 일회성 정리: 예전에 이미지 표시 기능을 만들다가 완전히 뺐는데, 아이템마다
+  // 들고 있던 이미지 경로 맵(images)은 그대로 남아 있었다. 화면엔 전혀 안
+  // 쓰이면서 용량만 차지하고 내보내기(백업)에도 그대로 실리니 완전히 지운다.
+  // 가져오기로 예전 백업을 불러올 때도 다시 필요하므로 함수로 빼둔다.
+  function stripCatalogImages(){
+    var stripped = false;
+    CATALOG.locations.concat(CATALOG.specialGroups).forEach(function(g){
+      g.items.forEach(function(it){
+        if('images' in it){ delete it.images; stripped = true; }
+      });
+    });
+    return stripped;
+  }
+  if(stripCatalogImages()) saveCatalog();
+
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}'); } catch(e){ state = {}; }
+  // 예전(색상별 전역) 대기 피크민 기록은 아이템 단위 구조로 대체됐으니 정리한다
+  (function(){
+    var hadOld = false;
+    Object.keys(state).forEach(function(k){ if(k.indexOf('waiting::')===0){ delete state[k]; hadOld = true; } });
+    if(hadOld) try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){}
+  })();
+  // 일회성 마이그레이션: 색상별 클리어 조건(이제는 "분할 알 개수")이 지정된
+  // 아이템은 예전엔 하나의 통합 카운트(0~조건×5)로 저장됐지만, 이제는 알마다
+  // 별도 키(itemId::color::0, ::1 ...)로 나눠 관리한다. 기존 통합 값을 알
+  // 하나당 최대 5개씩 순서대로 채워 옮겨준다. 앱 로드 시뿐 아니라 가져오기로
+  // 예전 형식 백업을 불러올 때도 다시 필요하므로 함수로 빼둔다.
+  function migrateSplitColorCombos(){
+    var migrated = false;
+    var goalUnit = CATALOG.goal || 5;
+    allItemsFlat().forEach(function(it){
+      if(!it.colorTargets) return;
+      it.colors.forEach(function(c){
+        var n = it.colorTargets[c] || 1;
+        if(n <= 1) return;
+        var oldKey = it.id + '::' + c;
+        if(!(oldKey in state)) return;
+        var oldVal = state[oldKey];
+        delete state[oldKey];
+        var remaining = oldVal;
+        for(var i=0;i<n && remaining>0;i++){
+          var put = Math.min(remaining, goalUnit);
+          state[it.id + '::' + c + '::' + i] = put;
+          remaining -= put;
+        }
+        migrated = true;
+      });
+    });
+    if(migrated) saveState();
+  }
+  migrateSplitColorCombos();
+
+  var curTab = 'loc';
+  var onlyIncomplete = false;
+  var searchTerm = '';
+  var searchQuery = null; // parseSearchQuery(searchTerm)의 결과 - {ast, colors, displayMode} 또는 null
+  var allOpen = false;
+  var openGroupIds = {};
+  var editMode = false;
+  var colorFilter = null;
+
+  function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY, JSON.stringify(CATALOG)); }catch(e){} }
+  function saveState(){ try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){} }
+
+  function colorMeta(key){
+    for(var i=0;i<CATALOG.colors.length;i++) if(CATALOG.colors[i].key === key) return CATALOG.colors[i];
+    return {key:key, hex:'#999999'};
+  }
+  function getCount(key){ return state[key] || 0; }
+  function setCount(key, val){
+    val = Math.max(0, Math.min(9999, val|0));
+    if(val === 0) delete state[key]; else state[key] = val;
+    saveState();
+  }
+  function comboKey(itemId, color){ return itemId + '::' + color; }
+  // "분할 알 개수": 이 색상을 서로 다른 디자인 여러 개로 따로 추적할지 (기본 1개).
+  // 예: 마작패 노랑에 2를 지정하면 노랑 알이 2개 생겨서 각각 독립적으로 관리된다.
+  function splitCountFor(item, color){
+    return (item && item.colorTargets && item.colorTargets[color]) || 1;
+  }
+  // 아이템의 색상들을 실제 추적 단위(콤보)로 펼친다. 분할 안 된 색상은 기존 키
+  // (itemId::color) 그대로 콤보 1개, 분할된 색상은 itemId::color::0, ::1 ... 로
+  // 나뉜 콤보 여러 개가 된다. 콤보 하나는 항상 클리어 1개 · 목표(5세트) CATALOG.goal개다.
+  function comboToken(cb){ return cb.idx==null ? cb.color : (cb.color + '::' + cb.idx); }
+  function itemCombos(item){
+    var natural = [];
+    item.colors.forEach(function(c){
+      var n = splitCountFor(item, c);
+      if(n <= 1){
+        natural.push({color:c, idx:null, key: comboKey(item.id, c)});
+      } else {
+        for(var i=0;i<n;i++){
+          natural.push({color:c, idx:i, key: comboKey(item.id, c) + '::' + i});
+        }
+      }
+    });
+    if(!item.comboOrder || !item.comboOrder.length) return natural;
+    // 사용자가 편집모드에서 알끼리 순서를 직접 바꿔놨다면(item.comboOrder), 색상별로
+    // 뭉쳐있지 않고 마작패 실물 패 순서처럼 색이 섞여도 그 순서를 그대로 따른다.
+    // 색상 삭제·알 개수 변경 등으로 더는 존재하지 않는 토큰은 무시하고, comboOrder에
+    // 없는 새 콤보는 뒤에 그대로 붙여서 자동으로 맞춰준다.
+    var byToken = {};
+    natural.forEach(function(cb){ byToken[comboToken(cb)] = cb; });
+    var ordered = [], used = {};
+    item.comboOrder.forEach(function(token){
+      var cb = byToken[token];
+      if(cb && !used[token]){ ordered.push(cb); used[token] = true; }
+    });
+    natural.forEach(function(cb){
+      var token = comboToken(cb);
+      if(!used[token]) ordered.push(cb);
+    });
+    return ordered;
+  }
+  // 색상 하나에 딸린 콤보 기록(분할 여부와 무관하게)을 전부 지운다 - 아이템/색상/
+  // 카테고리 삭제나, 분할 알 개수 자체가 바뀌어 예전 기록이 새 구조와 안 맞을 때 사용.
+  function deleteCombosForN(itemId, color, n){
+    if(n <= 1){
+      delete state[comboKey(itemId, color)];
+    } else {
+      for(var i=0;i<n;i++) delete state[comboKey(itemId, color) + '::' + i];
+    }
+  }
+  // 희귀 짝 연동처럼 "이 색상의 대표 콤보 하나"가 필요할 때 - 분할 안 됐으면 그대로,
+  // 분할됐으면 첫 번째 알을 대표로 삼는다.
+  function primaryComboKeyFor(item, color){
+    var n = splitCountFor(item, color);
+    return n <= 1 ? comboKey(item.id, color) : comboKey(item.id, color) + '::0';
+  }
+  // 대기 중인 피크민은 이미 "어떤 카테고리의 어떤 데코"로 태어날지 정해져 있으므로,
+  // 색상 하나에 뭉뚱그리지 않고 그 아이템(콤보)에 바로 묶어서 관리한다.
+  // 위치 데코 제작 재료 개념이라 위치 탭 아이템에서만 관리한다.
+  var WAIT_KEY = 'pikminDecoWait_v1';
+  var waitState = {};
+  try { waitState = JSON.parse(localStorage.getItem(WAIT_KEY) || '{}'); } catch(e){ waitState = {}; }
+  function saveWaitState(){ try{ localStorage.setItem(WAIT_KEY, JSON.stringify(waitState)); }catch(e){} }
+  function getWait(itemId, color){ return waitState[comboKey(itemId,color)] || 0; }
+  function setWait(itemId, color, val){
+    val = Math.max(0, Math.min(9999, val|0));
+    var key = comboKey(itemId, color);
+    if(val === 0) delete waitState[key]; else waitState[key] = val;
+  }
+  // 필터와 무관한 "진짜" 총합 - "데코"/"대기" 키워드가 이 아이템에 해당하는지
+  // 판정할 때는 반드시 이 값을 써야 한다. 예를 들어 "!데코;빨강"(=대기;빨강)처럼
+  // OR로 다른 색상과 묶였을 때, "빨강"쪽 색상 제한이 "대기" 판정에까지 새어들어가
+  // (빨강이 없는 아이템은 대기가 있어도 걸러지는) 서로 다른 OR 가지끼리 엉키는
+  // 문제를 막기 위함 - 판정은 항상 아이템의 실제 상태 기준이어야 한다.
+  function itemWaitTotalRaw(item){
+    return item.colors.reduce(function(s,c){ return s + getWait(item.id,c); }, 0);
+  }
+  function itemDecoTotalRaw(item){
+    return itemCombos(item).reduce(function(s,cb){ return s + getCount(cb.key); }, 0);
+  }
+  // "데코"/"대기" 키워드 판정 전용 - 색상 카드 클릭(colorFilter)은 "화면 전체를
+  // 이 색으로만 볼래"라는 전역 지정이라 판정에도 그대로 반영하지만, 검색어 자체
+  // 안의 색상 키워드(예: "대기;빨강"의 "빨강")는 반영하지 않는다 - 안 그러면
+  // OR로 묶인 서로 다른 가지끼리 판정이 새어들어간다(예: 빨강이 없는 아이템은
+  // 대기가 있어도 걸러지는 문제).
+  function itemWaitTotalForKeyword(item){
+    if(colorFilter) return getWait(item.id, colorFilter);
+    return itemWaitTotalRaw(item);
+  }
+  function itemDecoTotalForKeyword(item){
+    var combos = itemCombos(item);
+    if(colorFilter) combos = combos.filter(function(cb){ return cb.color === colorFilter; });
+    return combos.reduce(function(s,cb){ return s + getCount(cb.key); }, 0);
+  }
+  // 색상 필터가 걸려 있으면 대기/데코 마릿수도 그 색만 세어준다 - 색상 카드를
+  // 눌러서 필터링할 때 총 마릿수·대기 표시가 전체가 아니라 그 색 기준으로 보이도록.
+  // 색상 카드 클릭(colorFilter)뿐 아니라 검색어 안의 색상 키워드(빨강;하양 등)로
+  // 좁혀졌을 때도 카테고리·데코 카드에 찍히는 마릿수가 그 색들만의 합으로 보이게
+  // colorPassesFilters로 판단한다. 아무 필터도 없으면 항상 통과라 원래(전체 합)
+  // 그대로 - 검색이 끝나면 자동으로 원래 숫자로 돌아온다. (이건 "표시용" 숫자다 -
+  // "데코"/"대기" 키워드 판정에는 위의 Raw 버전을 쓴다.)
+  function itemWaitTotal(item){
+    return item.colors.reduce(function(s,c){ return colorPassesFilters(c) ? s + getWait(item.id,c) : s; }, 0);
+  }
+  function itemDecoTotal(item){
+    var combos = itemCombos(item).filter(function(cb){ return colorPassesFilters(cb.color); });
+    return combos.reduce(function(s,cb){ return s + getCount(cb.key); }, 0);
+  }
+  // 스페셜(이벤트) 데코는 "대기" 개념이 없으니 총 마릿수만 보여준다. 검색어에
+  // "데코"/"대기" 키워드가 쓰였으면(searchQuery.displayMode) 그 쪽만 표기한다.
+  function itemHeadcountHtml(item, kind){
+    var deco = itemDecoTotal(item);
+    // 희귀 종류는 스페셜(이벤트)과 마찬가지로 "대기" 개념 자체가 없으니(항상 0)
+    // 총 마릿수만 보여준다 - 의미 없는 "대기 0"을 굳이 표시하지 않는다.
+    if(kind === 'special' || item.isRare){
+      return '<div class="headcount-line">총 <span class="hc-deco">' + deco + '</span>마리</div>';
+    }
+    var wait = itemWaitTotal(item);
+    var mode = searchQuery && searchQuery.displayMode;
+    if(mode === 'deco') return '<div class="headcount-line">총 ' + (deco+wait) + '마리 <span class="hc-deco">데코 ' + deco + '</span></div>';
+    if(mode === 'wait') return '<div class="headcount-line">총 ' + (deco+wait) + '마리 <span class="hc-wait">대기 ' + wait + '</span></div>';
+    return '<div class="headcount-line">총 ' + (deco+wait) + '마리 <span class="hc-deco">데코 ' + deco + '</span> · <span class="hc-wait">대기 ' + wait + '</span></div>';
+  }
+  function groupHeadcountTotals(group){
+    var deco=0, wait=0;
+    group.items.forEach(function(it){
+      deco += itemDecoTotal(it);
+      wait += itemWaitTotal(it);
+    });
+    return {deco:deco, wait:wait, total:deco+wait};
+  }
+  function groupHeadcountHtml(group, kind){
+    var t = groupHeadcountTotals(group);
+    if(kind === 'special'){
+      return '<div class="headcount-line">총 <span class="hc-deco">' + t.deco + '</span>마리</div>';
+    }
+    var mode = searchQuery && searchQuery.displayMode;
+    if(mode === 'deco') return '<div class="headcount-line">총 ' + t.total + '마리 <span class="hc-deco">데코 ' + t.deco + '</span></div>';
+    if(mode === 'wait') return '<div class="headcount-line">총 ' + t.total + '마리 <span class="hc-wait">대기 ' + t.wait + '</span></div>';
+    return '<div class="headcount-line">총 ' + t.total + '마리 <span class="hc-deco">데코 ' + t.deco + '</span> · <span class="hc-wait">대기 ' + t.wait + '</span></div>';
+  }
+  function totalPikminCount(){
+    var decorated = 0, waiting = 0;
+    CATALOG.locations.forEach(function(l){
+      l.items.forEach(function(it){
+        itemCombos(it).forEach(function(cb){ decorated += getCount(cb.key); });
+        it.colors.forEach(function(c){ waiting += getWait(it.id,c); });
+      });
+    });
+    CATALOG.specialGroups.forEach(function(g){
+      g.items.forEach(function(it){
+        itemCombos(it).forEach(function(cb){ decorated += getCount(cb.key); });
+      });
+    });
+    return {decorated:decorated, waiting:waiting, total:decorated+waiting};
+  }
+  function openItemWaitModal(item){
+    var rows = item.colors.map(function(c){
+      var meta = colorMeta(c);
+      return '<div class="waiting-row"><span class="sw" style="background:' + meta.hex + '"></span>' + esc(c) +
+        '<input type="number" min="0" inputmode="numeric" class="waitingInput" data-color="' + esc(c) + '" value="' + getWait(item.id,c) + '"></div>';
+    }).join('');
+    var body = '<div class="waiting-grid">' + rows + '</div>' +
+      '<div class="waiting-hint">이 데코로 태어나기로 정해졌지만 아직 완성되지 않은, 색상별 대기 중 피크민 마릿수예요.</div>';
+    openModal('대기 중 피크민 · ' + item.name, body, {
+      okLabel: '저장',
+      onSubmit: function(){
+        document.querySelectorAll('.waitingInput').forEach(function(el){
+          var v = parseInt(el.value, 10);
+          setWait(item.id, el.getAttribute('data-color'), isNaN(v) ? 0 : v);
+        });
+        saveWaitState();
+        render();
+      }
+    });
+  }
+
+  // ---------- 희귀 데코 피크민 (rare deco level) ----------
+  // 카테고리(위치)별로 포인트가 쌓여 레벨이 오르는 인게임 시스템을 흉내낸다.
+  // 레벨 2~4는 표에 나온 값, 5레벨부터는 매 레벨 5000P로 고정.
+  var RARE_LEVEL_COSTS = {2:800, 3:1200, 4:3000};
+  var RARE_LEVEL_DEFAULT_COST = 5000;
+  // 앱에서 희귀 아이템 "등록/삭제"(칩 +/-)로 정산하는 기본 포인트 - 인게임 "선물 상자
+  // 탐험 완료(+200)"에 대응. 실제 모종뽑기 포인트는 반영 못 하니, 필요하면 배지를
+  // 눌러 직접 보정하면 된다.
+  var RARE_POINT_PER_UNIT = 200;
+
+  function rareCostForLevel(level){ return RARE_LEVEL_COSTS[level] || RARE_LEVEL_DEFAULT_COST; }
+  function rareCumulativePoints(level){
+    var total = 0;
+    for(var l=2; l<=level; l++) total += rareCostForLevel(l);
+    return total;
+  }
+  function rareLevelInfo(points){
+    points = Math.max(0, points|0);
+    var level = 1, remaining = points;
+    while(true){
+      var cost = rareCostForLevel(level+1);
+      if(remaining >= cost){ remaining -= cost; level++; } else { break; }
+    }
+    var nextCost = rareCostForLevel(level+1);
+    return {level:level, points:points, intoLevel:remaining, nextCost:nextCost, toNext: nextCost-remaining};
+  }
+  function rareKey(group){ return 'rare::' + group.id; }
+  function getRarePoints(group){ return state[rareKey(group)] || 0; }
+  function setRarePoints(group, val){
+    val = Math.max(0, Math.min(999999, val|0));
+    var key = rareKey(group);
+    if(val === 0) delete state[key]; else state[key] = val;
+    saveState();
+  }
+  // "다음 레벨까지 남은 포인트"를 사용자가 직접 편집했을 때, 내부적으로 계속 들고
+  // 있는 누적 포인트로 역산한다. 0 이하로 내려가면(포인트를 다 채웠으면) 레벨업을
+  // 몇 번이고 반영한다.
+  function rarePointsFromRemaining(currentLevel, remaining){
+    var level = currentLevel;
+    var nextCost = rareCostForLevel(level+1);
+    var into = nextCost - remaining;
+    while(into >= nextCost){
+      into -= nextCost;
+      level++;
+      nextCost = rareCostForLevel(level+1);
+    }
+    if(into < 0) into = 0;
+    return rareCumulativePoints(level) + into;
+  }
+  // 대기 중인 피크민(비희귀 아이템만) 하나가 데코로 자라면 "큰 모종" 획득에 준하는
+  // +200P로 어림잡아, 지금 대기 중인 걸 전부 소진하면 최대 몇 레벨까지 갈 수
+  // 있는지 카드에서 미리 보여준다.
+  var RARE_WAITING_POINT_ESTIMATE = 200;
+  function groupWaitingTotal(group){
+    var total = 0;
+    group.items.forEach(function(it){
+      if(it.isRare) return;
+      it.colors.forEach(function(c){ total += getWait(it.id, c); });
+    });
+    return total;
+  }
+  function projectedRareInfo(group){
+    var waitingCount = groupWaitingTotal(group);
+    var bonus = waitingCount * RARE_WAITING_POINT_ESTIMATE;
+    var projected = rareLevelInfo(getRarePoints(group) + bonus);
+    return {waitingCount:waitingCount, bonus:bonus, level:projected.level, toNext:projected.toNext};
+  }
+  function rareBadgeHtml(group){
+    var info = rareLevelInfo(getRarePoints(group));
+    var proj = projectedRareInfo(group);
+    var text = '🎁 Lv' + info.level + ' · ' + info.toNext + 'P';
+    if(proj.level > info.level) text += ' (최소 Lv' + proj.level + ')';
+    return '<button class="loc-badge rare-badge" data-group="' + group.id + '" title="다음 레벨까지 남은 포인트 · 탭해서 수정">' + text + '</button>';
+  }
+  function groupHasRare(group){ return group.items.some(function(it){ return it.isRare; }); }
+  // 희귀 레벨은 "일반(비희귀) 데코 카테고리 완성" 후에만 해금된다 - 희귀 아이템
+  // 자체는 이 판정에서 제외한다 (닭이 먼저냐 달걀이 먼저냐 문제 방지).
+  function groupBaseComplete(group){
+    // 카테고리 전체가 아니라, 실제로 희귀 짝이 있는 종류들만 완성되면 된다
+    // (역/슈퍼마켓처럼 일부만 희귀가 있는 경우와 공원처럼 전부 있는 경우 둘 다 대응)
+    var owned=0, total=0;
+    group.items.forEach(function(it){
+      if(it.isRare) return;
+      if(!findRarePair(it, group)) return;
+      itemCombos(it).forEach(function(cb){
+        var n = getCount(cb.key);
+        owned += Math.min(n, 1); total += 1;
+      });
+    });
+    return total>0 && owned>=total;
+  }
+  // 희귀 등록으로 일반 데코 마릿수가 도로 줄어도(연동 감소) 한 번 해금된 희귀
+  // 시스템은 계속 유지되도록 - 처음 완성됐을 때 한 번 켜지면 꺼지지 않는 플래그.
+  function rareUnlockedKey(group){ return 'rareUnlocked::' + group.id; }
+  function isRareUnlocked(group){
+    if(state[rareUnlockedKey(group)]) return true;
+    if(groupBaseComplete(group)){ state[rareUnlockedKey(group)] = true; saveState(); return true; }
+    return false;
+  }
+  // 자동 판정과 무관하게 사용자가 직접 희귀 해금 상태를 켜고 끈다 - 게임사가 나중에
+  // 색상을 추가해서(예: 얼음 피크민 후속 추가) 예전엔 완료됐던 카테고리가 자동
+  // 판정상 다시 미완료로 보일 때 등의 예외 상황에 대한 수동 보정 수단.
+  function toggleRareUnlock(group){
+    var key = rareUnlockedKey(group);
+    if(state[key]) delete state[key]; else state[key] = true;
+    saveState();
+    render();
+  }
+  function baseNameOf(name){ return name.replace(/\s*\(희귀\)\s*$/,'').trim(); }
+  function findRarePair(item, group){
+    if(!group) return null;
+    var base = baseNameOf(item.name);
+    return group.items.find(function(it){
+      return it !== item && !!it.isRare !== !!item.isRare && baseNameOf(it.name) === base;
+    }) || null;
+  }
+  function openRarePointsModal(group){
+    var pts = getRarePoints(group);
+    var info = rareLevelInfo(pts);
+    var proj = projectedRareInfo(group);
+    var body =
+      '<div class="rare-current">현재 <b>Lv ' + info.level + '</b> · 다음 레벨까지 ' + info.toNext + 'P 남음</div>' +
+      (proj.level > info.level ? '<div class="rare-current">🥚 대기 ' + proj.waitingCount + '마리를 전부 데코로 바꾸면 예상 최소 <b>Lv ' + proj.level + '</b></div>' : '') +
+      '<label>다음 레벨까지 남은 포인트</label>' +
+      '<div class="row"><input type="number" min="0" id="fRarePoints" value="' + info.toNext + '"></div>' +
+      '<div class="quickadd-row">' +
+        '<button type="button" class="quickAddBtn" data-add="5">−5</button>' +
+        '<button type="button" class="quickAddBtn" data-add="10">−10</button>' +
+        '<button type="button" class="quickAddBtn" data-add="100">−100</button>' +
+      '</div>' +
+      '<label>레벨로 맞추기</label>' +
+      '<div class="row"><input type="number" min="1" id="fRareLevel" value="' + info.level + '">' +
+        '<button type="button" id="fRareSnap">이 레벨로 설정</button></div>' +
+      '<div class="waiting-hint">인게임처럼 "다음 레벨까지 남은 포인트"를 기준으로 입력해요. 포인트를 얻으면 이 숫자가 줄어들고, 0이 되면 레벨업 하는 방식이에요. 희귀 칩을 +/- 할 때마다(선물 상자 탐험 완료에 대응) 자동으로 ' + RARE_POINT_PER_UNIT + 'P씩 정산돼요.</div>';
+    openModal('희귀 레벨 · ' + group.name, body, {
+      okLabel: '저장',
+      afterOpen: function(){
+        document.querySelectorAll('.quickAddBtn').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var input = document.getElementById('fRarePoints');
+            var v = (parseInt(input.value,10) || 0) - parseInt(btn.getAttribute('data-add'),10);
+            input.value = v;
+          });
+        });
+        document.getElementById('fRareSnap').addEventListener('click', function(){
+          var lvl = parseInt(document.getElementById('fRareLevel').value, 10);
+          if(isNaN(lvl) || lvl < 1) return;
+          document.getElementById('fRarePoints').value = rareCostForLevel(lvl+1);
+          document.getElementById('fRareLevel').setAttribute('data-target-level', lvl);
+        });
+      },
+      onSubmit: function(){
+        var lvlInput = document.getElementById('fRareLevel');
+        var snappedLevel = lvlInput.getAttribute('data-target-level');
+        var baseLevel = snappedLevel ? parseInt(snappedLevel,10) : info.level;
+        var v = parseInt(document.getElementById('fRarePoints').value, 10);
+        if(isNaN(v)) v = 0;
+        setRarePoints(group, rarePointsFromRemaining(baseLevel, v));
+        render();
+      }
+    });
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(m){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+    });
+  }
+
+  // ---------- modal ----------
+  function closeModal(){
+    document.getElementById('modalRoot').innerHTML = '';
+    // iOS Safari can deliver a "ghost" click to whatever element ends up
+    // under the finger once this overlay disappears — if that happens to be
+    // a details/summary, it would toggle it open/closed unintentionally.
+    // Swallow just that (summary-targeted) click; leave other clicks alone
+    // so a quick follow-up tap (e.g. another edit button) still works.
+    var guard = function(e){
+      if(!e.target.closest('summary')) return;
+      if(e.target.closest('button')) return; // a real button click inside summary - its own handler manages this
+      e.stopPropagation(); e.preventDefault();
+    };
+    document.addEventListener('click', guard, true);
+    setTimeout(function(){ document.removeEventListener('click', guard, true); }, 400);
+  }
+  function openModal(titleText, bodyHtml, opts){
+    opts = opts || {};
+    var root = document.getElementById('modalRoot');
+    root.innerHTML = '<div class="overlay" id="ovl"><div class="modal">' +
+      '<h3>' + esc(titleText) + '</h3>' +
+      '<div id="modalBody">' + bodyHtml + '</div>' +
+      '<div class="actions">' +
+        (opts.danger ? '<button id="mDel" class="danger">삭제</button>' : '') +
+        '<button id="mCancel">취소</button>' +
+        '<button id="mOk" class="primary">' + (opts.okLabel||'확인') + '</button>' +
+      '</div></div></div>';
+    document.getElementById('ovl').addEventListener('click', function(e){ if(e.target.id==='ovl') closeModal(); });
+    document.getElementById('mCancel').addEventListener('click', closeModal);
+    document.getElementById('mOk').addEventListener('click', function(){
+      if(opts.onSubmit) { var ok = opts.onSubmit(); if(ok !== false) closeModal(); }
+    });
+    if(opts.afterOpen) opts.afterOpen();
+    if(opts.danger){
+      document.getElementById('mDel').addEventListener('click', function(){
+        if(opts.onDelete) opts.onDelete();
+        closeModal();
+      });
+    }
+  }
+
+  function colorCheckboxesHtml(selectedKeys, targets){
+    selectedKeys = selectedKeys || [];
+    targets = targets || {};
+    return '<div class="colorgrid">' + CATALOG.colors.map(function(c){
+      var checked = selectedKeys.indexOf(c.key) !== -1 ? 'checked' : '';
+      var tval = targets[c.key] || 1;
+      return '<label class="colorchoice"><input type="checkbox" class="colorCb" value="' + esc(c.key) + '" ' + checked + '>' +
+        '<span class="sw" style="background:' + c.hex + '"></span>' + esc(c.key) +
+        '<input type="number" class="colorTargetInput" data-color="' + esc(c.key) + '" min="1" max="99" value="' + tval + '"></label>';
+    }).join('') + '</div>' +
+    '<label class="customToggleRow"><input type="checkbox" id="fCustomToggle"' + (Object.keys(targets).length ? ' checked' : '') + '> 색상별로 여러 개의 알(디자인) 따로 관리 (기본: 1개) — 예: 마작패 노랑에 2를 입력하면 노랑 알이 2개 생겨서 각각 독립적으로 5세트까지 채울 수 있어요.</label>';
+  }
+  function readCheckedColors(){
+    return Array.from(document.querySelectorAll('#modalBody .colorCb:checked')).map(function(el){ return el.value; });
+  }
+  function readColorTargets(){
+    var on = document.getElementById('fCustomToggle');
+    if(!on || !on.checked) return null;
+    var out = {};
+    Array.from(document.querySelectorAll('#modalBody .colorTargetInput')).forEach(function(el){
+      var checkbox = el.closest('.colorchoice').querySelector('.colorCb');
+      if(!checkbox.checked) return;
+      var v = parseInt(el.value, 10);
+      out[el.getAttribute('data-color')] = (!isNaN(v) && v >= 1) ? v : 1;
+    });
+    return out;
+  }
+  function wireCustomTargetsToggle(){
+    var toggle = document.getElementById('fCustomToggle');
+    var body = document.getElementById('modalBody');
+    if(!toggle) return;
+    body.classList.toggle('customTargetsOn', toggle.checked);
+    toggle.addEventListener('change', function(){ body.classList.toggle('customTargetsOn', toggle.checked); });
+  }
+
+  // ---------- edit actions ----------
+  function addColor(){
+    openModal('색상 추가', '<label>색상 이름</label><input type="text" id="fName" placeholder="예: 무지개">' +
+      '<label>색상 견본</label><div class="row"><input type="color" id="fHex" value="#8b5cf6"></div>', {
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        if(!name) return false;
+        if(CATALOG.colors.some(function(c){return c.key===name;})){ alert('이미 있는 색상 이름이에요.'); return false; }
+        CATALOG.colors.push({key:name, hex:document.getElementById('fHex').value});
+        saveCatalog(); render();
+      }
+    });
+  }
+  function editOrDeleteColor(key){
+    var meta = colorMeta(key);
+    openModal('색상 편집', '<label>색상 이름</label><input type="text" id="fName" value="' + esc(key) + '">' +
+      '<label>색상 견본</label><div class="row"><input type="color" id="fHex" value="' + meta.hex + '"></div>', {
+      danger:true,
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        if(!name) return false;
+        var newHex = document.getElementById('fHex').value;
+        renameColorEverywhere(key, name);
+        var m = colorMeta(name); m.hex = newHex;
+        saveCatalog(); render();
+      },
+      onDelete: function(){
+        if(!confirm('"' + key + '" 색상을 삭제하면 모든 아이템에서 이 색상과 관련 기록이 함께 삭제됩니다. 계속할까요?')) return;
+        deleteColorEverywhere(key);
+        saveCatalog(); saveState(); render();
+      }
+    });
+  }
+  function renameColorEverywhere(oldKey, newKey){
+    if(oldKey === newKey) return;
+    CATALOG.colors.forEach(function(c){ if(c.key===oldKey) c.key = newKey; });
+    function fix(items){
+      items.forEach(function(it){
+        var idx = it.colors.indexOf(oldKey);
+        if(idx !== -1) it.colors[idx] = newKey;
+      });
+    }
+    CATALOG.locations.forEach(function(l){ fix(l.items); });
+    CATALOG.specialGroups.forEach(function(g){ fix(g.items); });
+    // migrate state + waiting-pikmin keys (both use the same itemId::color format)
+    var newState = {};
+    Object.keys(state).forEach(function(k){
+      var parts = k.split('::');
+      if(parts[1] === oldKey) parts[1] = newKey;
+      newState[parts.join('::')] = state[k];
+    });
+    state = newState; saveState();
+    var newWait = {};
+    Object.keys(waitState).forEach(function(k){
+      var parts = k.split('::');
+      if(parts[1] === oldKey) parts[1] = newKey;
+      newWait[parts.join('::')] = waitState[k];
+    });
+    waitState = newWait; saveWaitState();
+  }
+  function deleteColorEverywhere(key){
+    CATALOG.colors = CATALOG.colors.filter(function(c){ return c.key !== key; });
+    function fix(items){
+      items.forEach(function(it){
+        it.colors = it.colors.filter(function(c){ return c !== key; });
+      });
+    }
+    CATALOG.locations.forEach(function(l){ fix(l.items); });
+    CATALOG.specialGroups.forEach(function(g){ fix(g.items); });
+    Object.keys(state).forEach(function(k){ if(k.split('::')[1] === key) delete state[k]; });
+    Object.keys(waitState).forEach(function(k){ if(k.split('::')[1] === key) delete waitState[k]; });
+    saveWaitState();
+  }
+
+  function groupsFor(kind){ return kind==='special' ? CATALOG.specialGroups : CATALOG.locations; }
+  function addGroup(kind){
+    var label = kind==='special' ? '스페셜 카테고리' : '위치(카테고리)';
+    openModal(label + ' 추가', '<label>이름</label><input type="text" id="fName" placeholder="예: 새 카테고리">', {
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        if(!name) return false;
+        var arr = groupsFor(kind);
+        var id = kind==='special' ? uid('sg') : (arr.reduce(function(m,l){return Math.max(m,l.id);},0) + 1);
+        arr.push({id:id, name:name, items:[]});
+        saveCatalog(); render();
+      }
+    });
+  }
+  function editOrDeleteGroup(kind, group){
+    var label = kind==='special' ? '스페셜 카테고리' : '위치';
+    openModal(label + ' 편집', '<label>이름</label><input type="text" id="fName" value="' + esc(group.name) + '">', {
+      danger:true,
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        if(!name) return false;
+        group.name = name; saveCatalog(); render();
+      },
+      onDelete: function(){
+        if(!confirm('"' + group.name + '" ' + label + '와(과) 그 안의 모든 아이템 기록을 삭제할까요?')) return;
+        group.items.forEach(function(it){ it.colors.forEach(function(c){ deleteCombosForN(it.id, c, splitCountFor(it,c)); delete waitState[comboKey(it.id,c)]; }); });
+        var arr = groupsFor(kind);
+        var idx = arr.indexOf(group);
+        if(idx !== -1) arr.splice(idx,1);
+        saveCatalog(); saveState(); saveWaitState(); render();
+      }
+    });
+  }
+  function rareCheckboxHtml(checked){
+    return '<label class="customToggleRow"><input type="checkbox" id="fIsRare"' + (checked?' checked':'') +
+      '> 희귀 데코 피크민이에요 (같은 이름의 일반 데코와 마릿수가 서로 연동돼요)</label>';
+  }
+  function requiredCheckboxHtml(checked){
+    return '<label class="customToggleRow"><input type="checkbox" id="fRequired"' + (checked?' checked':'') +
+      '> 이 종류를 모아야 카테고리가 완료돼요 (국내 미획득·이벤트 한정 등이면 체크 해제 - 안 모아도 카테고리는 완료로 표시돼요)</label>';
+  }
+  function addItem(targetList, kind){
+    openModal('아이템 추가', '<label>아이템 이름</label><input type="text" id="fName" placeholder="예: 새 데코">' +
+      '<label>존재하는 색상</label>' + colorCheckboxesHtml([]) + (kind==='loc' ? rareCheckboxHtml(false) : '') +
+      requiredCheckboxHtml(true), {
+      afterOpen: wireCustomTargetsToggle,
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        var colors = readCheckedColors();
+        if(!name || !colors.length){ alert('이름과 색상을 하나 이상 입력해주세요.'); return false; }
+        var newItem = {id:uid('U'), name:name, colors:colors};
+        var targets = readColorTargets();
+        if(targets) newItem.colorTargets = targets;
+        var rareCb = document.getElementById('fIsRare');
+        if(rareCb && rareCb.checked) newItem.isRare = true;
+        var reqCb = document.getElementById('fRequired');
+        if(reqCb && !reqCb.checked) newItem.optional = true;
+        targetList.push(newItem);
+        saveCatalog(); render();
+      }
+    });
+  }
+  function editOrDeleteItem(item, list, kind){
+    openModal('아이템 편집', '<label>아이템 이름</label><input type="text" id="fName" value="' + esc(item.name) + '">' +
+      '<label>존재하는 색상</label>' + colorCheckboxesHtml(item.colors, item.colorTargets) +
+      (kind==='loc' ? rareCheckboxHtml(!!item.isRare) : '') +
+      requiredCheckboxHtml(!item.optional), {
+      danger:true,
+      afterOpen: wireCustomTargetsToggle,
+      onSubmit: function(){
+        var name = document.getElementById('fName').value.trim();
+        var colors = readCheckedColors();
+        if(!name || !colors.length){ alert('이름과 색상을 하나 이상 입력해주세요.'); return false; }
+        item.name = name;
+        var oldTargets = item.colorTargets || {};
+        var removed = item.colors.filter(function(c){ return colors.indexOf(c) === -1; });
+        removed.forEach(function(c){ deleteCombosForN(item.id, c, oldTargets[c] || 1); delete waitState[comboKey(item.id,c)]; });
+        var targets = readColorTargets() || {};
+        // 남은 색상 중 분할 알 개수가 바뀐 경우, 예전 기록이 새 구조와 안 맞으니 정리한다
+        colors.forEach(function(c){
+          if(removed.indexOf(c) !== -1) return;
+          var oldN = oldTargets[c] || 1, newN = targets[c] || 1;
+          if(oldN !== newN) deleteCombosForN(item.id, c, oldN);
+        });
+        item.colors = colors;
+        if(Object.keys(targets).length) item.colorTargets = targets; else delete item.colorTargets;
+        var rareCb = document.getElementById('fIsRare');
+        if(rareCb){ if(rareCb.checked) item.isRare = true; else delete item.isRare; }
+        var reqCb = document.getElementById('fRequired');
+        if(reqCb){ if(!reqCb.checked) item.optional = true; else delete item.optional; }
+        saveCatalog(); saveState(); saveWaitState(); render();
+      },
+      onDelete: function(){
+        if(!confirm('"' + item.name + '" 아이템을 삭제할까요?')) return;
+        item.colors.forEach(function(c){ deleteCombosForN(item.id, c, splitCountFor(item,c)); delete waitState[comboKey(item.id,c)]; });
+        var idx = list.indexOf(item);
+        if(idx !== -1) list.splice(idx,1);
+        saveCatalog(); saveState(); saveWaitState(); render();
+      }
+    });
+  }
+  function duplicateItem(item, list){
+    // for decos that need several distinct designs per color (화투, 마작패 등):
+    // duplicate the item, then rename/adjust colors on the copy via ✏️
+    var copy = {id: uid('U'), name: item.name + ' 사본', colors: item.colors.slice()};
+    if(item.colorTargets) copy.colorTargets = deepClone(item.colorTargets);
+    if(item.comboOrder) copy.comboOrder = item.comboOrder.slice();
+    var idx = list.indexOf(item);
+    list.splice(idx+1, 0, copy);
+    saveCatalog(); render();
+  }
+
+  // 일부 스페셜 데코는 색상 하나당 여러 개의 서로 다른 디자인을 모아야 완성돼요
+  // (예: 화투, 마작패, 트럼프 카드, 체스 말). 원본 스프레드시트에 기록돼 있던
+  // 디자인별 색상 구성 그대로 자동으로 나눠주는 1회성 도구.
+  var MULTI_VARIANT_SPECIALS = {
+    '체스 말': [
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','하양','날개','바위']
+    ],
+    '화투(볼륨1)': [
+      ['빨강','노랑','파랑','보라'],['빨강','노랑','파랑','보라'],['빨강','노랑','파랑','보라'],
+      ['빨강','노랑','파랑','보라'],['빨강','노랑','파랑','보라'],['빨강','노랑','파랑','보라']
+    ],
+    '화투(볼륨2)': [
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['날개','바위']
+    ],
+    '마작패': [
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['노랑','파랑','보라','하양','날개','바위'],
+      ['노랑','파랑','보라','하양','날개','바위'],
+      ['하양']
+    ],
+    '트럼프 카드': [
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','하양','날개','바위'],
+      ['빨강','노랑','파랑','보라','날개','바위']
+    ]
+  };
+  function findGroupAndListContainingName(name){
+    var groups = CATALOG.locations.concat(CATALOG.specialGroups);
+    for(var i=0;i<groups.length;i++){
+      var idx = groups[i].items.findIndex(function(it){ return it.name === name; });
+      if(idx !== -1) return {group:groups[i], idx:idx};
+    }
+    return null;
+  }
+  function splitMultiVariantSpecials(){
+    var names = Object.keys(MULTI_VARIANT_SPECIALS).filter(function(name){
+      return !!findGroupAndListContainingName(name);
+    });
+    if(!names.length){
+      alert('나눌 항목을 찾지 못했어요. 이미 나눠져 있거나 이름이 바뀐 것 같아요.');
+      return;
+    }
+    if(!confirm(names.join(', ') + '\n위 스페셜 데코를 색상별 여러 디자인으로 나눌까요?\n(해당 항목의 기존 보유 기록은 초기화돼요)')) return;
+    names.forEach(function(name){
+      var found = findGroupAndListContainingName(name);
+      if(!found) return;
+      var list = found.group.items;
+      var idx = found.idx;
+      var orig = list[idx];
+      orig.colors.forEach(function(c){ deleteCombosForN(orig.id, c, splitCountFor(orig,c)); });
+      var variants = MULTI_VARIANT_SPECIALS[name];
+      var newItems = variants.map(function(colors, i){
+        return {id: uid('U'), name: name + ' #' + (i+1), colors: colors.slice()};
+      });
+      list.splice.apply(list, [idx,1].concat(newItems));
+    });
+    saveCatalog(); saveState(); render();
+  }
+  function moveGroup(kind, group, dir){
+    var arr = groupsFor(kind);
+    var idx = arr.indexOf(group);
+    var newIdx = idx + dir;
+    if(idx === -1 || newIdx < 0 || newIdx >= arr.length) return;
+    arr.splice(idx,1);
+    arr.splice(newIdx,0,group);
+    saveCatalog(); render();
+  }
+  var MAX_PINNED = 3;
+  function togglePinGroup(group){
+    if(group.pinned){
+      delete group.pinned;
+    } else {
+      var pinnedCount = CATALOG.specialGroups.filter(function(g){ return g.pinned; }).length;
+      if(pinnedCount >= MAX_PINNED){
+        alert('상단 고정은 최대 ' + MAX_PINNED + '개까지예요. 다른 카테고리를 먼저 고정 해제해주세요.');
+        return;
+      }
+      group.pinned = true;
+    }
+    saveCatalog(); render();
+  }
+  function moveItem(item, list, dir){
+    var idx = list.indexOf(item);
+    var newIdx = idx + dir;
+    if(idx === -1 || newIdx < 0 || newIdx >= list.length) return;
+    list.splice(idx,1);
+    list.splice(newIdx,0,item);
+    saveCatalog(); render();
+  }
+  function findItemAndList(id){
+    var found = null;
+    CATALOG.locations.forEach(function(g){
+      g.items.forEach(function(it){ if(it.id===id) found = {item:it, list:g.items, group:g, kind:'loc'}; });
+    });
+    if(!found){
+      CATALOG.specialGroups.forEach(function(g){
+        g.items.forEach(function(it){ if(it.id===id) found = {item:it, list:g.items, group:g, kind:'special'}; });
+      });
+    }
+    return found;
+  }
+  // 카테고리 클리어까지 정확히 몇 마리 남았는지, 마지막 하나면 어떤 색/아이템인지 찾는다
+  var ALMOST_THRESHOLD = 3;
+  function groupClearGap(group){
+    var owned=0, total=0, missingMap={}, missingOrder=[];
+    group.items.forEach(function(it){
+      if(it.optional) return; // 획득 인정 안 함 - 없어도 카테고리 완료로 친다
+      itemCombos(it).forEach(function(cb){
+        var n = getCount(cb.key);
+        var got = Math.min(n, 1);
+        owned += got; total += 1;
+        if(got < 1){
+          var mkey = it.name + '|' + cb.color;
+          if(!missingMap[mkey]){ missingMap[mkey] = {name: it.name, color: cb.color, deficit: 0}; missingOrder.push(mkey); }
+          missingMap[mkey].deficit += 1;
+        }
+      });
+    });
+    var missingList = missingOrder.map(function(k){ return missingMap[k]; });
+    var remaining = total - owned;
+    var withinThreshold = remaining > 0 && remaining <= ALMOST_THRESHOLD;
+    return {owned:owned, total:total, remaining:remaining, missing: withinThreshold ? missingList : null};
+  }
+  function almostBannerHtml(missingList){
+    if(!missingList || !missingList.length) return '';
+    var first = missingList[0];
+    var meta = colorMeta(first.color);
+    var parts = missingList.map(function(m){ return esc(m.color) + ' ' + esc(m.name) + ' ' + m.deficit + '마리'; });
+    return '<div class="loc-almost" style="--ac:' + meta.hex + '">⚡ <b>' + parts.join(', ') + '</b> 모으면 완료!</div>';
+  }
+
+  // ---------- totals ----------
+  function allItemsFlat(){
+    var out = [];
+    CATALOG.locations.concat(CATALOG.specialGroups).forEach(function(g){
+      g.items.forEach(function(it){ out.push(it); });
+    });
+    return out;
+  }
+  // 콤보(아이템×색상, 분할된 색상은 알 하나하나가 콤보 하나) 단위로 합산한다.
+  // 콤보 하나의 클리어 분모는 항상 1, 목표(5세트) 분모는 CATALOG.goal이다.
+  // "종류 보유"는 콤보당 1마리, "5마리 달성"은 콤보당 CATALOG.goal마리를 채워야
+  // 카운트된다 - 1마리만 모아서는 5마리 달성에 안 잡힌다.
+  function comboTotals(){
+    var existOwned=0, existTotal=0, goalOwned=0, goalTotal=0;
+    allItemsFlat().forEach(function(it){
+      itemCombos(it).forEach(function(cb){
+        var n = getCount(cb.key);
+        existOwned += Math.min(n, 1); existTotal += 1;
+        goalOwned += (n>=CATALOG.goal ? 1 : 0); goalTotal += 1;
+      });
+    });
+    return {existOwned:existOwned, existTotal:existTotal, goalOwned:goalOwned, goalTotal:goalTotal};
+  }
+  function colorTotals(){
+    var map = {};
+    CATALOG.colors.forEach(function(c){ map[c.key] = {heads:0, deco:0, wait:0, met:0, total:0}; });
+    allItemsFlat().forEach(function(it){
+      itemCombos(it).forEach(function(cb){
+        var c = cb.color;
+        if(!map[c]) map[c] = {heads:0, deco:0, wait:0, met:0, total:0};
+        var n = getCount(cb.key);
+        // 큰 숫자(heads)는 데코+대기를 합친 "총 보유", 작은 초록 글씨(met/total)는
+        // 순수 데코 진행도, 맨 아래 줄(deco/wait)은 데코·대기 마릿수를 각각 보여준다.
+        map[c].deco += n;
+        map[c].met += Math.min(n, 1);
+        map[c].total += 1;
+      });
+      // 대기(wait)는 분할 여부와 무관하게 색상당 하나라, 콤보가 아니라 색상 기준으로 한 번만 더한다
+      it.colors.forEach(function(c){
+        if(!map[c]) map[c] = {heads:0, deco:0, wait:0, met:0, total:0};
+        map[c].wait += getWait(it.id, c);
+      });
+    });
+    CATALOG.colors.forEach(function(c){ map[c.key].heads = map[c.key].deco + map[c.key].wait; });
+    return map;
+  }
+  // 위치별/스페셜 탭 각각의 총 데코 수·활성화된 종류 수·(위치별만) 대기 수를 모은다.
+  // 색상 필터가 걸려 있으면 그 색상만 집계한다(다른 표시들과 일관되게).
+  function tabTotals(kind){
+    var groups = kind === 'special' ? CATALOG.specialGroups : CATALOG.locations;
+    var deco=0, wait=0, existOwned=0, existTotal=0;
+    groups.forEach(function(g){
+      g.items.forEach(function(it){
+        itemCombos(it).forEach(function(cb){
+          if(colorFilter && cb.color !== colorFilter) return;
+          var n = getCount(cb.key);
+          deco += n;
+          existOwned += Math.min(n,1); existTotal += 1;
+        });
+        if(kind !== 'special'){
+          it.colors.forEach(function(c){
+            if(colorFilter && c !== colorFilter) return;
+            wait += getWait(it.id, c);
+          });
+        }
+      });
+    });
+    return {deco:deco, wait:wait, existOwned:existOwned, existTotal:existTotal};
+  }
+
+  // ---------- 현황판 ----------
+  // 예전에 엑셀로 관리하던 "색상 x 지표" 요약표를 그대로 앱 안에 재현한다.
+  // 위치(비희귀)/위치 희귀/이벤트(스페셜)/전체 4개 구간을 색상별로 집계.
+  function allLocItems(){
+    var out = [];
+    CATALOG.locations.forEach(function(g){ g.items.forEach(function(it){ out.push(it); }); });
+    return out;
+  }
+  // "위치(희귀 포함)" 집계와는 별개로, 희귀 종류만 따로 떼서 참고용으로 보여주는
+  // 섹션에 쓴다 - 전체 합계에는 중복으로 더하지 않는다(이미 위치 집계에 포함됨).
+  function locRareItems(){
+    var out = [];
+    CATALOG.locations.forEach(function(g){ g.items.forEach(function(it){ if(it.isRare) out.push(it); }); });
+    return out;
+  }
+  function specialAllItems(){
+    var out = [];
+    CATALOG.specialGroups.forEach(function(g){ g.items.forEach(function(it){ out.push(it); }); });
+    return out;
+  }
+  function colorScopeTotals(items, includeWait){
+    var map = {};
+    CATALOG.colors.forEach(function(c){ map[c.key] = {deco:0, wait:0, met:0, total:0}; });
+    items.forEach(function(it){
+      itemCombos(it).forEach(function(cb){
+        var c = cb.color;
+        if(!map[c]) map[c] = {deco:0, wait:0, met:0, total:0};
+        var n = getCount(cb.key);
+        map[c].deco += n;
+        map[c].met += Math.min(n,1);
+        map[c].total += 1;
+      });
+      if(includeWait){
+        it.colors.forEach(function(c){
+          if(!map[c]) map[c] = {deco:0, wait:0, met:0, total:0};
+          map[c].wait += getWait(it.id, c);
+        });
+      }
+    });
+    return map;
+  }
+  function mergeColorMaps(maps){
+    var out = {};
+    CATALOG.colors.forEach(function(c){ out[c.key] = {deco:0, wait:0, met:0, total:0}; });
+    maps.forEach(function(m){
+      CATALOG.colors.forEach(function(c){
+        var k = c.key, src = m[k] || {};
+        out[k].deco += src.deco||0; out[k].wait += src.wait||0;
+        out[k].met += src.met||0; out[k].total += src.total||0;
+      });
+    });
+    return out;
+  }
+  function pctStr(n, d){ return d ? (Math.round(n/d*1000)/10) + '%' : '0%'; }
+  function dashNumRow(label, arr){
+    var cells = arr.map(function(v){ return '<td>' + v + '</td>'; }).join('');
+    var sum = arr.reduce(function(a,b){ return a+b; }, 0);
+    return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + sum + '</td></tr>';
+  }
+  function dashPctRow(label, metArr, totalArr){
+    var cells = metArr.map(function(m,i){ return '<td>' + pctStr(m, totalArr[i]) + '</td>'; }).join('');
+    var sumM = metArr.reduce(function(a,b){ return a+b; }, 0);
+    var sumT = totalArr.reduce(function(a,b){ return a+b; }, 0);
+    return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + pctStr(sumM,sumT) + '</td></tr>';
+  }
+  function dashboardSection(title, map, opts){
+    opts = opts || {};
+    var keys = CATALOG.colors.map(function(c){ return c.key; });
+    var deco = keys.map(function(k){ return (map[k]||{}).deco||0; });
+    var wait = keys.map(function(k){ return (map[k]||{}).wait||0; });
+    var met = keys.map(function(k){ return (map[k]||{}).met||0; });
+    var total = keys.map(function(k){ return (map[k]||{}).total||0; });
+    var head = deco.map(function(d,i){ return d+wait[i]; });
+    var rows = '<tr class="dash-sect"><td colspan="' + (keys.length+2) + '">' + esc(title) + '</td></tr>';
+    rows += dashNumRow('데코 피크민', deco);
+    if(opts.showWait) rows += dashNumRow('일반 피크민(대기)', wait);
+    rows += dashNumRow('활성화 종류 수', met);
+    rows += dashNumRow('현존 종류 수', total);
+    rows += dashPctRow('데코 진행도', met, total);
+    // 대기가 없는 구간(희귀 등)은 "총 피크민"이 "데코 피크민"과 완전히 같은
+    // 숫자라 굳이 또 한 줄 보여줄 필요가 없다 - opts.skipTotalRow로 생략.
+    if(!opts.skipTotalRow) rows += dashNumRow(opts.totalLabel || '총 피크민', head);
+    return rows;
+  }
+  // 색상 이름을 그냥 텍스트로 나열하면 밋밋하니, 실제 색상의 작은 알(원)로 보여준다.
+  function colorDotHtml(color){
+    var meta = colorMeta(color);
+    return '<span class="dash-dot" style="background:' + meta.hex + '" title="' + esc(color) + '"></span>';
+  }
+  function itemMissingColors(item){
+    // 화투·마작패처럼 색상 하나에 알이 여러 개(분할)인 아이템은 같은 색이 여러
+    // 번 부족할 수 있는데, 여기서는 "어떤 색이 부족한지"만 보여주면 되니 중복은
+    // 한 번으로 합친다 - 안 그러면 알이 우르르 나열돼 표가 지나치게 넓어진다.
+    var missing = {};
+    itemCombos(item).forEach(function(cb){ if(getCount(cb.key) < 1) missing[cb.color] = true; });
+    return Object.keys(missing);
+  }
+  // 카테고리별로 "아직 완료 안 된 종류"를 하나하나 짚어서(카테고리는 rowspan으로
+  // 한 번만) 그 종류에 부족한 색상을 알로 보여준다 - 카테고리 단위로 뭉뚱그리지
+  // 않고 어떤 종류가 문제인지 바로 알 수 있게.
+  function dashboardIncompleteRows(groups){
+    var rows = '';
+    groups.forEach(function(g){
+      var gap = groupClearGap(g);
+      if(!(gap.total>0 && gap.owned<gap.total)) return;
+      var incompleteItems = g.items.filter(function(it){
+        return !it.optional && itemMissingColors(it).length > 0;
+      });
+      if(!incompleteItems.length) return;
+      incompleteItems.forEach(function(it, idx){
+        rows += '<tr>' +
+          (idx===0 ? '<td class="dash-cat" rowspan="' + incompleteItems.length + '">' + esc(g.name) + '</td>' : '') +
+          '<td>' + esc(it.name) + '</td>' +
+          '<td><span class="dash-dots">' + itemMissingColors(it).map(colorDotHtml).join('') + '</span></td>' +
+          '</tr>';
+      });
+    });
+    return rows;
+  }
+  function dashboardIncompleteHtml(){
+    var locRows = dashboardIncompleteRows(CATALOG.locations);
+    var specRows = dashboardIncompleteRows(CATALOG.specialGroups);
+    var tableShell = function(rows){
+      // 줄바꿈이 생기면 rowspan 셀과 옆 행 높이가 어긋나 보이니, 표는 한 줄
+      // 고정(nowrap)으로 두고 좁은 화면에서는 가로 스크롤로 본다.
+      return rows ? '<div class="dash-listwrap"><table class="dash-list"><thead><tr><th>카테고리</th><th>종류</th><th>부족 색상</th></tr></thead><tbody>' +
+        rows + '</tbody></table></div>' : '<div class="dash-empty">미완성 카테고리 없음 🎉</div>';
+    };
+    return '<div class="dash-section-title">미완성 카테고리 - 위치</div>' + tableShell(locRows) +
+      '<div class="dash-section-title">미완성 카테고리 - 스페셜</div>' + tableShell(specRows);
+  }
+  function dashboardHtml(){
+    var locMap = colorScopeTotals(allLocItems(), true);
+    var rareMap = colorScopeTotals(locRareItems(), false);
+    var specMap = colorScopeTotals(specialAllItems(), false);
+    // 전체 합계는 위치(이미 희귀 포함)+이벤트만 더한다 - 희귀 참고 섹션을 또
+    // 더하면 희귀가 두 번 잡히니 여기엔 안 넣는다.
+    var allMap = mergeColorMaps([locMap, specMap]);
+    var head = '<tr><th class="dash-label">구분</th>' + CATALOG.colors.map(function(c){
+      return '<th>' + colorDotHtml(c.key) + esc(c.key) + '</th>';
+    }).join('') + '<th>합</th></tr>';
+    var body = dashboardSection('위치 (희귀 포함)', locMap, {showWait:true, totalLabel:'위치 총 피크민'}) +
+      dashboardSection('위치(희귀)', rareMap, {showWait:false, skipTotalRow:true}) +
+      dashboardSection('이벤트 (스페셜)', specMap, {showWait:false, totalLabel:'이벤트 총 피크민'}) +
+      dashboardSection('전체 합계', allMap, {showWait:true, totalLabel:'전체 보유 피크민'});
+    var tableHtml = '<div class="dash-tablewrap"><table class="dash-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+    return '<div class="dashboard">' + tableHtml + dashboardIncompleteHtml() + '</div>';
+  }
+
+  function updateHeader(){
+    var t = comboTotals();
+    document.getElementById('existBar').style.width = (t.existTotal? t.existOwned/t.existTotal*100:0) + '%';
+    document.getElementById('existPct').textContent = t.existOwned + '/' + t.existTotal;
+    document.getElementById('goalBar').style.width = (t.goalTotal? t.goalOwned/t.goalTotal*100:0) + '%';
+    document.getElementById('goalPct').textContent = t.goalOwned + '/' + t.goalTotal;
+
+    var tp = totalPikminCount();
+    document.getElementById('totalPikminText').textContent = tp.total + '마리 (데코 ' + tp.decorated + ' + 대기 ' + tp.waiting + ')';
+
+    if(curTab !== 'dashboard'){
+      var tt = tabTotals(curTab);
+      document.getElementById('tabStats').innerHTML =
+        '<span>총 데코 <b class="ts-deco">' + tt.deco + '</b>마리</span>' +
+        '<span>활성화 종류 <b>' + tt.existOwned + '/' + tt.existTotal + '</b></span>' +
+        (curTab === 'special' ? '' : '<span>대기 <b class="ts-wait">' + tt.wait + '</b>마리</span>');
+    }
+
+    var cm = colorTotals();
+    var html = CATALOG.colors.map(function(c){
+      var s = cm[c.key] || {heads:0,deco:0,wait:0,met:0,total:0};
+      var active = colorFilter === c.key;
+      return '<div class="cs-pill' + (active?' active':'') + '" data-color="' + esc(c.key) + '">' +
+        (editMode ? '<button class="csDel" data-color="' + esc(c.key) + '">×</button>' : '') +
+        '<div class="sw" style="background:' + c.hex + '"></div>' +
+        '<div class="n">' + s.heads + '</div>' +
+        '<div class="k">' + esc(c.key) + '</div>' +
+        '<div class="g">' + s.met + '/' + s.total + '</div>' +
+        '<div class="dw">' + s.deco + '/' + s.wait + '</div>' +
+        '</div>';
+    }).join('') + (editMode ? '<button class="cs-addpill" id="addColorBtn">+</button>' : '');
+    document.getElementById('colorSummary').innerHTML = html;
+
+    if(editMode){
+      document.getElementById('addColorBtn').addEventListener('click', addColor);
+      document.querySelectorAll('.csDel').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          editOrDeleteColor(btn.getAttribute('data-color'));
+        });
+      });
+      document.querySelectorAll('.cs-pill').forEach(function(p){
+        p.addEventListener('click', function(){ editOrDeleteColor(p.getAttribute('data-color')); });
+      });
+    } else {
+      document.querySelectorAll('.cs-pill').forEach(function(p){
+        p.addEventListener('click', function(){
+          var color = p.getAttribute('data-color');
+          colorFilter = (colorFilter === color) ? null : color;
+          // 대기/데코 마릿수 표시도 필터 색상 기준으로 다시 그려야 하니 통째로 다시 렌더
+          render();
+        });
+      });
+    }
+  }
+
+
+  function chipHtml(combo, item){
+    var key = combo.key;
+    var n = getCount(key);
+    var goal = CATALOG.goal;
+    var meta = colorMeta(combo.color);
+    var owned = n>0, cleared = n>=1, met = n>=goal;
+    var pct = Math.min(n/goal,1);
+    var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
+    var idxBadge = (combo.idx!=null) ? '<span class="chip-idx">' + (combo.idx+1) + '</span>' : '';
+    return '<div class="chip' + (owned?' owned':'') + (cleared?' cleared':'') + (met?' met':'') +
+      '" data-key="' + key + '" title="' + esc(combo.color) + '">' +
+      (owned ? '<button class="chip-minus" data-key="' + key + '">−</button>' : '') +
+      idxBadge +
+      '<button class="chip-plus" data-key="' + key + '">' +
+      '<span class="inner" style="background:' + (owned ? bg : 'var(--chip-off)') + '">' +
+      '<span class="dot" style="--dotcolor:' + meta.hex + '"></span></span></button>' +
+      '<span class="n">' + n + '/' + goal + '</span></div>';
+  }
+
+  function itemHtml(item, list, kind){
+    var combos = itemCombos(item);
+    var t = {owned:0,total:combos.length};
+    combos.forEach(function(cb){ if(getCount(cb.key)>=1) t.owned++; });
+    var allMet = combos.length>0 && combos.every(function(cb){ return getCount(cb.key)>=CATALOG.goal; });
+    var complete = combos.length>0 && t.owned >= t.total;
+    // 편집모드의 스페셜(이벤트) 탭에서는 칩마다 이전/다음 버튼(‹›)을 붙여서, 색상
+    // 구분 없이 전체 칩 순서를 자유롭게 바꿀 수 있게 한다 - 마작패처럼 실물 패
+    // 순서가 색상별로 뭉쳐 있지 않고 섞여 있을 때(빨강-노랑-보라-파랑-빨강 …) 그
+    // 순서 그대로 맞추기 위함. 위치 데코는 이런 다중 디자인 개념이 없으니 필요 없다.
+    var chips = combos.map(function(cb, pos){
+      var chip = chipHtml(cb, item);
+      if(!editMode || kind !== 'special') return chip;
+      var canPrev = pos > 0, canNext = pos < combos.length-1;
+      return '<div class="chip-wrap">' + chip + '<div class="chip-reorder">' +
+        '<button class="chipMoveBtn" data-item-id="' + esc(item.id) + '" data-pos="' + pos + '" data-dir="-1" title="이전 칩과 순서 바꾸기"' + (canPrev?'':' disabled') + '>‹</button>' +
+        '<button class="chipMoveBtn" data-item-id="' + esc(item.id) + '" data-pos="' + pos + '" data-dir="1" title="다음 칩과 순서 바꾸기"' + (canNext?'':' disabled') + '>›</button>' +
+        '</div></div>';
+    }).join('');
+    var customBadge = item.colorTargets ? '<span class="loc-badge" title="색상별 알 개수 지정됨">🎯</span>' : '';
+    var rareItemBadge = item.isRare ? '<span class="loc-badge" title="희귀 데코 - 같은 이름 일반 데코와 마릿수 연동">🎁</span>' : '';
+    var optionalBadge = item.optional ? '<span class="loc-badge" title="획득 인정 안 함 - 없어도 카테고리 완료로 처리">🎫</span>' : '';
+    var waitTotal = (kind==='loc' && !item.isRare) ? itemWaitTotal(item) : 0;
+    var waitBtn = (kind==='loc' && !item.isRare) ? '<button class="waitItemBtn" data-item-id="' + item.id + '" title="대기 중인 피크민">🥚' +
+      (waitTotal>0 ? waitTotal : '') + '</button>' : '';
+    var editBtns = editMode ? '<div class="edit-btns"><button class="moveItemBtn" data-dir="-1">▲</button>' +
+      '<button class="moveItemBtn" data-dir="1">▼</button><button class="editItemBtn">✏️</button>' +
+      '<button class="dupItemBtn" title="복제">⧉</button></div>' : '';
+    return '<div class="item' + (complete?' complete':'') + (allMet?' goalmet':'') + (item.isRare?' rare-item':'') + '" data-item-id="' + item.id + '" data-search="' +
+      esc(item.name.toLowerCase()) + '" data-complete="' + (complete?'1':'0') + '" data-colors="' +
+      esc(item.colors.join(' ')) + '">' +
+      '<div class="item-head"><div class="item-name">' + esc(item.name) + customBadge + rareItemBadge + optionalBadge + '</div>' + waitBtn + editBtns + '</div>' +
+      itemHeadcountHtml(item, kind) +
+      '<div class="chips">' + chips + '</div></div>';
+  }
+
+  function groupSectionHtml(group, kind){
+    var gap = groupClearGap(group);
+    var owned = gap.owned, total = gap.total;
+    var goalTotal=0, met=0;
+    group.items.forEach(function(it){
+      if(it.optional) return;
+      itemCombos(it).forEach(function(cb){
+        var n = getCount(cb.key);
+        met += (n>=CATALOG.goal ? 1 : 0); goalTotal += 1;
+      });
+    });
+    var pct = total? Math.round(owned/total*100):0;
+    var complete = total>0 && owned>=total;
+    var goalComplete = goalTotal>0 && met>=goalTotal;
+    var badge = goalComplete ? '<span class="loc-badge completion-badge gold" title="전 조합 5마리 달성">🏅</span>'
+      : (complete ? '<span class="loc-badge completion-badge" title="전 종류 보유">✅</span>' : '');
+    var pinBadge = (kind==='special' && group.pinned) ? '<span class="loc-badge pin-badge" title="상단 고정됨">📌</span>' : '';
+    var hasRare = kind==='loc' && groupHasRare(group) && isRareUnlocked(group);
+    var rareBadge = hasRare ? rareBadgeHtml(group) : '';
+    var almost = kind==='loc' ? almostBannerHtml(gap.missing) : '';
+    var itemsHtml = group.items.map(function(it){ return itemHtml(it, group.items, kind); }).join('');
+    var addBtn = editMode ? '<button class="addItemBtn" data-group="' + group.id + '" data-kind="' + kind + '" style="margin:4px 10px 8px;padding:8px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--text-dim);font-size:12px;width:calc(100% - 20px);">+ 아이템 추가</button>' : '';
+    var pinBtn = (editMode && kind==='special') ? '<button class="pinGroupBtn' + (group.pinned?' on':'') + '" data-group="' + group.id + '" title="상단 고정">📌</button>' : '';
+    // 자동 판정(비희귀 종류 전부 완료)과 무관하게 희귀 해금 표시를 수동으로 켜고 끌 수 있는
+    // 버튼 - 게임사가 나중에 색상을 추가해서 예전엔 완료됐던 카테고리가 자동 판정상
+    // 다시 미완료로 보일 때(신규 색상을 아직 못 모았을 때) 등의 예외 상황을 위한 보험.
+    var rareToggleBtn = (editMode && kind==='loc' && groupHasRare(group)) ?
+      '<button class="rareUnlockToggleBtn' + (isRareUnlocked(group)?' on':'') + '" data-group="' + group.id + '" title="희귀 해금 상태 수동 전환">' +
+      (isRareUnlocked(group) ? '🎁 해금됨' : '🎁 해금 안됨') + '</button>' : '';
+    var editGroupBtn = editMode ? '<div class="edit-btns">' + pinBtn + rareToggleBtn + '<button class="moveGroupBtn" data-group="' + group.id + '" data-kind="' + kind + '" data-dir="-1">▲</button>' +
+      '<button class="moveGroupBtn" data-group="' + group.id + '" data-kind="' + kind + '" data-dir="1">▼</button>' +
+      '<button class="editGroupBtn" data-group="' + group.id + '" data-kind="' + kind + '">✏️</button></div>' : '';
+    var isPinned = kind==='special' && !!group.pinned;
+    return '<details class="loc' + (complete?' loc-complete':'') + (goalComplete?' loc-goalmet':'') + (isPinned?' loc-pinned':'') + '" data-group-id="' + group.id + '" data-kind="' + kind + '"' + (openGroupIds[group.id]?' open':'') + '>' +
+      '<summary><div class="loc-row"><div class="loc-title">' + esc(group.name) + pinBadge + badge + rareBadge + '</div>' +
+      '<div class="loc-meta">' + editGroupBtn + '<span class="loc-count">' + owned + '/' + total + '</span><span class="chev"></span></div>' +
+      '</div>' + groupHeadcountHtml(group, kind) + almost + '<div class="loc-progress"><div style="width:' + pct + '%"></div></div></summary>' +
+      '<div class="items">' + itemsHtml + '</div>' + addBtn + '</details>';
+  }
+
+  function render(){
+    var main = document.getElementById('main');
+    // remember which sections are currently open/closed before rebuilding the DOM,
+    // so edits/reorders/adds don't collapse sections the user had open
+    main.querySelectorAll('details.loc').forEach(function(d){
+      openGroupIds[d.getAttribute('data-group-id')] = d.open;
+    });
+    document.getElementById('editToggle').classList.toggle('on', editMode);
+    // 현황판 탭은 검색/필터가 적용되는 목록이 아니라 통계 요약이라, 그 UI들을
+    // 숨기고 별도 렌더 경로로 빠진다.
+    document.getElementById('toolbarRow').style.display = curTab === 'dashboard' ? 'none' : '';
+    document.getElementById('tabStats').style.display = curTab === 'dashboard' ? 'none' : '';
+    document.getElementById('searchResultInfo').style.display = curTab === 'dashboard' ? 'none' : (document.getElementById('searchResultInfo').style.display);
+    if(curTab === 'dashboard'){
+      main.innerHTML = dashboardHtml();
+      updateHeader();
+      return;
+    }
+    var kind = curTab === 'loc' ? 'loc' : 'special';
+    var groups = groupsFor(kind);
+    if(kind === 'special'){
+      // 고정된 카테고리(최대 3개)를 원래 순서는 유지한 채 맨 위로
+      groups = groups.slice().sort(function(a,b){ return (b.pinned?1:0) - (a.pinned?1:0); });
+    }
+    var html = groups.map(function(g){ return groupSectionHtml(g, kind); }).join('');
+    if(editMode){
+      var addLabel = kind === 'special' ? '+ 스페셜 카테고리 추가' : '+ 위치(카테고리) 추가';
+      html += '<button class="addLocBtn" id="addGroupBtn">' + addLabel + '</button>';
+      if(kind === 'special'){
+        html += '<button class="addLocBtn" id="splitMultiBtn" style="margin-top:6px;">🎴 색상당 여러 디자인 필요한 데코 자동 분리 (화투·마작패·트럼프·체스말)</button>';
+      }
+    }
+    main.innerHTML = html || '<div class="empty">항목이 없습니다.</div>';
+    if(editMode){
+      var addGroupBtn = document.getElementById('addGroupBtn');
+      if(addGroupBtn) addGroupBtn.addEventListener('click', function(){ addGroup(kind); });
+      var splitMultiBtn = document.getElementById('splitMultiBtn');
+      if(splitMultiBtn) splitMultiBtn.addEventListener('click', splitMultiVariantSpecials);
+      main.querySelectorAll('.dupItemBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var id = btn.closest('.item').getAttribute('data-item-id');
+          var found = findItemAndList(id);
+          if(found) duplicateItem(found.item, found.list);
+        });
+      });
+      main.querySelectorAll('.addItemBtn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var k = btn.getAttribute('data-kind');
+          var arr = groupsFor(k);
+          var group = arr.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+          addItem(group.items, k);
+        });
+      });
+      main.querySelectorAll('.editGroupBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var k = btn.getAttribute('data-kind');
+          var arr = groupsFor(k);
+          var group = arr.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+          editOrDeleteGroup(k, group);
+        });
+      });
+      main.querySelectorAll('.pinGroupBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var group = CATALOG.specialGroups.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+          if(group) togglePinGroup(group);
+        });
+      });
+      main.querySelectorAll('.rareUnlockToggleBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var group = CATALOG.locations.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+          if(group) toggleRareUnlock(group);
+        });
+      });
+      main.querySelectorAll('.moveGroupBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var k = btn.getAttribute('data-kind');
+          var arr = groupsFor(k);
+          var group = arr.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+          moveGroup(k, group, parseInt(btn.getAttribute('data-dir'),10));
+        });
+      });
+      main.querySelectorAll('.editItemBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var id = btn.closest('.item').getAttribute('data-item-id');
+          var found = findItemAndList(id);
+          if(found) editOrDeleteItem(found.item, found.list, found.kind);
+        });
+      });
+      main.querySelectorAll('.moveItemBtn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          var id = btn.closest('.item').getAttribute('data-item-id');
+          var found = findItemAndList(id);
+          if(found) moveItem(found.item, found.list, parseInt(btn.getAttribute('data-dir'),10));
+        });
+      });
+    }
+    main.querySelectorAll('.waitItemBtn').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var found = findItemAndList(btn.getAttribute('data-item-id'));
+        if(found) openItemWaitModal(found.item);
+      });
+    });
+    main.querySelectorAll('.rare-badge').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var group = CATALOG.locations.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+        if(group) openRarePointsModal(group);
+      });
+    });
+    applyFilters();
+    updateHeader();
+  }
+
+  // ---------- 검색어 질의 언어 ----------
+  // 연산자: & AND, ; OR, ! NOT, ( ) 그룹(우선연산), = 앞에 붙이면 그 항목을 완전일치로.
+  // 우선순위는 일반적인 불리언 표기와 같이 NOT > AND > OR - 괄호로 얼마든지 뒤집을 수 있다.
+  // 키워드: 카테고리명/데코명은 부분일치, 색상 이름은 카탈로그 색상과 완전일치일 때만
+  // 색상으로 인식, "데코"/"대기"는 예약어로 각각 데코·대기 마릿수 유무를 뜻한다.
+  function tokenizeQuery(str){
+    var tokens = [];
+    var i = 0;
+    while(i < str.length){
+      var c = str[i];
+      if(c === '&' || c === ';' || c === '!' || c === '(' || c === ')'){
+        tokens.push({type:c});
+        i++;
+      } else {
+        var j = i;
+        while(j < str.length && '&;!()'.indexOf(str[j]) === -1) j++;
+        var raw = str.slice(i,j).trim();
+        if(raw) tokens.push({type:'TERM', value:raw});
+        i = j;
+      }
+    }
+    return tokens;
+  }
+  function parseQueryAst(str){
+    var tokens = tokenizeQuery(str);
+    var pos = 0;
+    function peek(){ return tokens[pos]; }
+    function next(){ return tokens[pos++]; }
+    function parseOr(){
+      var node = parseAnd();
+      while(peek() && peek().type === ';'){ next(); node = {op:'OR', left:node, right:parseAnd()}; }
+      return node;
+    }
+    function parseAnd(){
+      var node = parseNot();
+      while(peek() && peek().type === '&'){ next(); node = {op:'AND', left:node, right:parseNot()}; }
+      return node;
+    }
+    function parseNot(){
+      if(peek() && peek().type === '!'){ next(); return {op:'NOT', operand:parseNot()}; }
+      return parseAtom();
+    }
+    function parseAtom(){
+      var tok = peek();
+      if(!tok) return {op:'TERM', value:'', exact:false};
+      if(tok.type === '('){
+        next();
+        var inner = parseOr();
+        if(peek() && peek().type === ')') next();
+        return inner;
+      }
+      if(tok.type === 'TERM'){
+        next();
+        var v = tok.value, exact = false;
+        if(v.charAt(0) === '='){ exact = true; v = v.slice(1).trim(); }
+        return {op:'TERM', value:v, exact:exact};
+      }
+      next(); // 피연산자 없는 연산자 - 그냥 건너뛴다
+      return {op:'TERM', value:'', exact:false};
+    }
+    return parseOr();
+  }
+  function isColorTermValue(v){ return CATALOG.colors.some(function(c){ return c.key === v; }); }
+  // node가 색상 항목들로만 이루어진 AND/OR 트리(예: 노랑, 노랑;빨강, (노랑&빨강))면
+  // 그 색상 배열을 반환하고, 색상이 아닌 다른 항목이 하나라도 섞여 있으면 null을
+  // 반환한다 - "!(노랑;빨강)"처럼 괄호로 묶인 색상 여러 개의 부정도 "이 색들만
+  // 빼고 보여달라"는 뜻으로 알아채기 위한 판별기.
+  function pureColorTermsIn(node){
+    if(!node) return null;
+    if(node.op === 'TERM') return isColorTermValue(node.value) ? [node.value] : null;
+    if(node.op === 'AND' || node.op === 'OR'){
+      var l = pureColorTermsIn(node.left), r = pureColorTermsIn(node.right);
+      if(l === null || r === null) return null;
+      return l.concat(r);
+    }
+    return null; // NOT나 그 외는 순수 색상 트리로 치지 않는다
+  }
+  // "!데코"는 "대기"와, "!대기"는 "데코"와 완전히 같은 뜻으로 쓰기로 했으므로
+  // 평가/힌트 수집 전에 미리 그 형태로 통째로 바꿔둔다(중첩된 괄호 안에 있어도
+  // 자식부터 정규화하면 자연히 걸러진다).
+  function normalizeQueryAst(node){
+    if(!node) return node;
+    if(node.op === 'NOT'){
+      var operand = normalizeQueryAst(node.operand);
+      if(operand.op === 'TERM' && operand.value === '데코') return {op:'TERM', value:'대기', exact:false};
+      if(operand.op === 'TERM' && operand.value === '대기') return {op:'TERM', value:'데코', exact:false};
+      return {op:'NOT', operand:operand};
+    }
+    if(node.op === 'AND' || node.op === 'OR'){
+      return {op:node.op, left:normalizeQueryAst(node.left), right:normalizeQueryAst(node.right)};
+    }
+    return node;
+  }
+  function queryTermMatches(term, item, group){
+    var v = term.value;
+    if(!v) return true;
+    if(v === '데코') return itemDecoTotalForKeyword(item) > 0;
+    if(v === '대기') return itemWaitTotalForKeyword(item) > 0;
+    if(isColorTermValue(v)){
+      return item.colors.indexOf(v) !== -1;
+    }
+    var vLower = v.toLowerCase();
+    var groupName = (group.name || '').toLowerCase();
+    var itemName = (item.name || '').toLowerCase();
+    if(term.exact) return groupName === vLower || itemName === vLower;
+    return groupName.indexOf(vLower) !== -1 || itemName.indexOf(vLower) !== -1;
+  }
+  function evalQueryAst(node, item, group){
+    if(!node) return true;
+    switch(node.op){
+      case 'AND': return evalQueryAst(node.left,item,group) && evalQueryAst(node.right,item,group);
+      case 'OR': return evalQueryAst(node.left,item,group) || evalQueryAst(node.right,item,group);
+      case 'NOT':
+        // "!색상" 및 "!(색상;색상&...)"은 필터링에는 영향을 주지 않는다 - 그
+        // 색(들)만 빼고 다른 색 칩들을 보여달라는 "표시 범위" 지정일 뿐, "이
+        // 색이 없는 카테고리를 보여달라"는 뜻이 아니기 때문(데코/대기는 위에서
+        // 이미 반대 키워드로 치환돼 여기 안 옴).
+        if(pureColorTermsIn(node.operand) !== null) return true;
+        return !evalQueryAst(node.operand, item, group);
+      default: return queryTermMatches(node, item, group);
+    }
+  }
+  // 질의문에 등장한 색상(긍정/부정 따로)과 데코/대기 키워드를 모아서 칩 표시
+  // 범위 좁히기와 마릿수 표기 모드 결정에 쓴다.
+  function collectQueryHints(node, includeColors, excludeColors, modes){
+    if(!node) return;
+    if(node.op === 'NOT'){
+      var negColors = pureColorTermsIn(node.operand);
+      if(negColors) negColors.forEach(function(c){ excludeColors[c] = true; });
+      // 그 외(카테고리명 등)의 부정은 칩/표기 힌트에 영향 없음
+      return;
+    }
+    if(node.op === 'AND' || node.op === 'OR'){
+      collectQueryHints(node.left, includeColors, excludeColors, modes);
+      collectQueryHints(node.right, includeColors, excludeColors, modes);
+      return;
+    }
+    if(node.value === '데코') modes.deco = true;
+    else if(node.value === '대기') modes.wait = true;
+    else if(isColorTermValue(node.value)) includeColors[node.value] = true;
+  }
+  function parseSearchQuery(str){
+    str = (str || '').trim();
+    if(!str) return null;
+    var ast;
+    try { ast = normalizeQueryAst(parseQueryAst(str)); } catch(e){ return null; }
+    var includeColors = {}, excludeColors = {}, modes = {deco:false, wait:false};
+    collectQueryHints(ast, includeColors, excludeColors, modes);
+    var displayMode = (modes.deco && !modes.wait) ? 'deco' : (modes.wait && !modes.deco ? 'wait' : null);
+    return {ast:ast, includeColors:includeColors, excludeColors:excludeColors, displayMode:displayMode};
+  }
+  // 색상 필터(카드 클릭)와 검색어 안의 색상 키워드(긍정/부정)를 모두 반영해
+  // 특정 색이 지금 "보여줄 대상"인지 판단한다 - 칩 표시 좁히기와 필터링된
+  // 마릿수 집계 양쪽에서 같이 쓴다.
+  function colorPassesFilters(color){
+    if(colorFilter && color !== colorFilter) return false;
+    if(searchQuery){
+      if(Object.keys(searchQuery.includeColors).length && !searchQuery.includeColors[color]) return false;
+      if(searchQuery.excludeColors[color]) return false;
+    }
+    return true;
+  }
+
+  function applyFilters(){
+    var main = document.getElementById('main');
+    searchQuery = parseSearchQuery(searchTerm);
+    var anyFilterActive = !!(searchTerm || onlyIncomplete || colorFilter);
+    var matchedGroupCount = 0, filteredDeco = 0, filteredWait = 0;
+    main.querySelectorAll('.item').forEach(function(el){
+      var found = findItemAndList(el.getAttribute('data-item-id'));
+      var matchesSearch = !searchQuery || (found && evalQueryAst(searchQuery.ast, found.item, found.group));
+      var matchesIncomplete = !onlyIncomplete || el.getAttribute('data-complete') === '0';
+      var colors = el.getAttribute('data-colors') || '';
+      var matchesColor = !colorFilter || (' ' + colors + ' ').indexOf(' ' + colorFilter + ' ') !== -1;
+      var visible = matchesSearch && matchesIncomplete && matchesColor;
+      el.style.display = visible ? '' : 'none';
+      // 색상 필터(카드 클릭) 및 검색어 안의 색상 키워드(긍정=이 색만, 부정=이
+      // 색만 빼고) - 그 아이템 안에서 어떤 색 칩을 보여줄지 결정한다
+      el.querySelectorAll('.chip').forEach(function(chip){
+        chip.style.display = colorPassesFilters(chip.getAttribute('title')) ? '' : 'none';
+      });
+      // itemDecoTotal/itemWaitTotal도 이제 같은 colorPassesFilters를 쓰므로,
+      // 카드 표기(headcount)와 전체 집계(filteredDeco/Wait)가 항상 같은 숫자를
+      // 본다 - 필터가 없으면 자동으로 원래(전체) 합으로 돌아간다.
+      if(found && visible){
+        var hcEl = el.querySelector('.headcount-line');
+        if(hcEl) hcEl.outerHTML = itemHeadcountHtml(found.item, found.kind);
+        filteredDeco += itemDecoTotal(found.item);
+        if(found.kind !== 'special') filteredWait += itemWaitTotal(found.item);
+      }
+    });
+    var locs = main.querySelectorAll('details.loc');
+    locs.forEach(function(loc){
+      var visible = loc.querySelectorAll('.item:not([style*="display: none"])').length;
+      if(anyFilterActive){
+        loc.style.display = visible ? '' : 'none';
+        if(visible) loc.open = true;
+      } else {
+        loc.style.display = '';
+      }
+      if(visible){
+        matchedGroupCount++;
+        var group = groupsFor(loc.getAttribute('data-kind')).find(function(g){ return String(g.id) === loc.getAttribute('data-group-id'); });
+        if(group){
+          var locHcEl = loc.querySelector('summary > .headcount-line');
+          if(locHcEl) locHcEl.outerHTML = groupHeadcountHtml(group, loc.getAttribute('data-kind'));
+        }
+      }
+    });
+    // 검색어든 미완료만이든 뭔가 필터가 걸려 있으면, 헤더의 "총 보유 피크민"과
+    // 같은 형식으로 지금 걸러진 결과의 카테고리 수·마릿수를 같이 보여준다
+    var infoEl = document.getElementById('searchResultInfo');
+    if(infoEl){
+      if(anyFilterActive){
+        infoEl.style.display = '';
+        infoEl.textContent = matchedGroupCount + '개 카테고리 검색됨 · 필터링된 피크민 ' +
+          (filteredDeco+filteredWait) + '마리 (데코 ' + filteredDeco + ' + 대기 ' + filteredWait + ')';
+      } else {
+        infoEl.style.display = 'none';
+      }
+    }
+  }
+
+  function refreshChip(key){
+    document.querySelectorAll('.chip[data-key="' + CSS.escape(key) + '"]').forEach(function(chip){
+      var n = getCount(key);
+      var color = key.split('::')[1];
+      var goal = CATALOG.goal;
+      var meta = colorMeta(color);
+      var owned = n>0, cleared = n>=1, met = n>=goal;
+      chip.classList.toggle('owned', owned);
+      chip.classList.toggle('cleared', cleared);
+      chip.classList.toggle('met', met);
+      var pct = Math.min(n/goal,1);
+      var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
+      chip.querySelector('.inner').style.background = owned ? bg : 'var(--chip-off)';
+      chip.querySelector('.n').textContent = n + '/' + goal;
+      var minusBtn = chip.querySelector('.chip-minus');
+      if(owned && !minusBtn){
+        minusBtn = document.createElement('button');
+        minusBtn.className = 'chip-minus';
+        minusBtn.setAttribute('data-key', key);
+        minusBtn.textContent = '−';
+        chip.insertBefore(minusBtn, chip.firstChild);
+      } else if(!owned && minusBtn){
+        minusBtn.remove();
+      }
+    });
+  }
+
+  // 칩 전체의 표시 순서(색상 구분 없이)를 바꾼다 - 마작패처럼 실물 패 순서가 색상별로
+  // 뭉쳐있지 않을 때, 원하는 순서 그대로 나열할 수 있게 한다. 실제 마릿수 기록은
+  // 색상(+알 번호)에 그대로 묶여 있고, item.comboOrder(칩 표시 순서만 담은 배열)만
+  // 바뀐다 - 값을 맞바꾸는 게 아니라 "이 칩을 어디에 보여줄지"만 바꾸는 것.
+  document.getElementById('main').addEventListener('click', function(e){
+    var btn = e.target.closest('.chipMoveBtn');
+    if(!btn || btn.disabled) return;
+    var itemId = btn.getAttribute('data-item-id');
+    var pos = parseInt(btn.getAttribute('data-pos'), 10);
+    var otherPos = pos + parseInt(btn.getAttribute('data-dir'), 10);
+    var found = findItemAndList(itemId);
+    if(!found) return;
+    var item = found.item;
+    var combos = itemCombos(item);
+    if(otherPos < 0 || otherPos >= combos.length) return;
+    var tokens = combos.map(comboToken);
+    var tmp = tokens[pos]; tokens[pos] = tokens[otherPos]; tokens[otherPos] = tmp;
+    item.comboOrder = tokens;
+    saveCatalog();
+    render();
+  });
+
+  document.getElementById('main').addEventListener('click', function(e){
+    var minusBtn = e.target.closest('.chip-minus');
+    var plusBtn = e.target.closest('.chip-plus');
+    if(!minusBtn && !plusBtn) return;
+    var target = minusBtn || plusBtn;
+    var chip = target.closest('.chip');
+    var key = target.getAttribute('data-key');
+    var clickedColor = key.split('::')[1];
+    setCount(key, getCount(key) + (minusBtn ? -1 : 1));
+
+    var itemEl = chip.closest('.item');
+    var id = itemEl.getAttribute('data-item-id');
+    var found0 = findItemAndList(id);
+    var item = found0 ? found0.item : null;
+
+    if(item && item.isRare && found0.kind === 'loc'){
+      // 희귀 데코는 같은 이름의 일반 데코와 마릿수가 연동된다(한쪽이 늘면 한쪽이 줄고).
+      // 포인트는 여기서 정산하지 않는다 - 희귀 피크민이 생기는 것 자체는 포인트를
+      // 만들어내지 않고, 그 카테고리의 "대기→데코" 성장이 포인트를 만든다.
+      var pair = findRarePair(item, found0.group);
+      if(pair){
+        var pkey = primaryComboKeyFor(pair, clickedColor);
+        setCount(pkey, getCount(pkey) + (minusBtn ? 1 : -1));
+      }
+      render();
+      return;
+    }
+
+    if(item && found0.kind === 'loc' && !item.isRare){
+      // 색상 칩을 등록하면 대기 중이던 피크민 하나가 데코로 자란 걸로 보고 대기 수를
+      // 그만큼 줄인다(0 밑으로는 안 내려감 - 큰 모종으로 대기 없이 바로 데코가 된
+      // 경우엔 그냥 무시됨). 등록을 취소하면 다시 대기로 돌려놓는다.
+      var w = getWait(item.id, clickedColor);
+      if(minusBtn){
+        setWait(item.id, clickedColor, w + 1);
+      } else if(w > 0){
+        setWait(item.id, clickedColor, w - 1);
+      }
+      saveWaitState();
+      var waitBtnEl = itemEl.querySelector('.waitItemBtn');
+      if(waitBtnEl){
+        var newWaitTotal = itemWaitTotal(item);
+        waitBtnEl.textContent = '🥚' + (newWaitTotal>0 ? newWaitTotal : '');
+      }
+      // 카테고리에 희귀 시스템이 해금돼 있으면, 희귀 짝 유무와 상관없이 "대기→데코"로
+      // 자란 모든 등록이 포인트를 만든다(희귀와 상응하는 종류가 아니어도 마찬가지).
+      if(groupHasRare(found0.group) && isRareUnlocked(found0.group)){
+        setRarePoints(found0.group, getRarePoints(found0.group) + (minusBtn ? -RARE_POINT_PER_UNIT : RARE_POINT_PER_UNIT));
+      }
+    }
+    refreshChip(key);
+    if(item){
+      var combos = itemCombos(item);
+      var owned=0, met=true;
+      combos.forEach(function(cb){ var n=getCount(cb.key); if(n>=1) owned++; if(n<CATALOG.goal) met=false; });
+      var complete = combos.length>0 && owned>=combos.length;
+      itemEl.classList.toggle('complete', complete);
+      itemEl.classList.toggle('goalmet', met && combos.length>0);
+      itemEl.setAttribute('data-complete', complete?'1':'0');
+      var itemHcEl = itemEl.querySelector('.headcount-line');
+      if(itemHcEl) itemHcEl.outerHTML = itemHeadcountHtml(item, found0.kind);
+    }
+    var locEl = chip.closest('details.loc');
+    if(locEl){
+      var loId = locEl.getAttribute('data-group-id');
+      var loKind = locEl.getAttribute('data-kind');
+      var loc = groupsFor(loKind).find(function(l){ return String(l.id)===loId; });
+      var locHcEl = locEl.querySelector('summary > .headcount-line');
+      if(locHcEl) locHcEl.outerHTML = groupHeadcountHtml(loc, loKind);
+      var gap = groupClearGap(loc);
+      var lOwned = gap.owned, lTotal = gap.total, lMet=0, lGoalTotal=0;
+      loc.items.forEach(function(it){ if(it.optional) return; itemCombos(it).forEach(function(cb){
+        var n = getCount(cb.key);
+        lMet += (n>=CATALOG.goal ? 1 : 0); lGoalTotal += 1;
+      }); });
+      locEl.querySelector('.loc-count').textContent = lOwned + '/' + lTotal;
+      var pct = lTotal? Math.round(lOwned/lTotal*100):0;
+      locEl.querySelector('.loc-progress > div').style.width = pct + '%';
+      var lComplete = lTotal>0 && lOwned>=lTotal;
+      var lGoalComplete = lGoalTotal>0 && lMet>=lGoalTotal;
+      locEl.classList.toggle('loc-complete', lComplete);
+      locEl.classList.toggle('loc-goalmet', lGoalComplete);
+      var badgeEl = locEl.querySelector('summary .loc-title > .loc-badge.completion-badge');
+      if(badgeEl) badgeEl.remove();
+      if(lGoalComplete || lComplete){
+        var span = document.createElement('span');
+        span.className = 'loc-badge completion-badge' + (lGoalComplete ? ' gold' : '');
+        span.title = lGoalComplete ? '전 조합 5마리 달성' : '전 종류 보유';
+        span.textContent = lGoalComplete ? '🏅' : '✅';
+        locEl.querySelector('.loc-title').appendChild(span);
+      }
+      var almostEl = locEl.querySelector('summary .loc-almost');
+      if(almostEl) almostEl.remove();
+      if(loKind === 'loc' && gap.missing){
+        var wrap = document.createElement('div');
+        wrap.innerHTML = almostBannerHtml(gap.missing);
+        locEl.querySelector('summary').insertBefore(wrap.firstChild, locEl.querySelector('.loc-progress'));
+      }
+      // 일반 데코 완성/대기 마릿수 변화로 희귀 레벨 배지(잔여 포인트·예상 레벨)가
+      // 바뀌었을 수 있으니 다시 그린다
+      var rareEl = locEl.querySelector('summary .loc-title > .rare-badge');
+      if(rareEl) rareEl.remove();
+      if(loKind === 'loc' && groupHasRare(loc) && isRareUnlocked(loc)){
+        var rwrap = document.createElement('div');
+        rwrap.innerHTML = rareBadgeHtml(loc);
+        var rbtn = rwrap.firstChild;
+        rbtn.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          openRarePointsModal(loc);
+        });
+        locEl.querySelector('.loc-title').appendChild(rbtn);
+      }
+    }
+    if(onlyIncomplete) applyFilters();
+    updateHeader();
+  });
+
+  document.getElementById('main').addEventListener('contextmenu', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip) return;
+    e.preventDefault();
+  });
+  var pressTimer = null;
+  document.getElementById('main').addEventListener('touchstart', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip) return;
+    pressTimer = setTimeout(function(){ promptExact(chip); pressTimer = null; }, 550);
+  }, {passive:true});
+  ['touchend','touchmove','touchcancel'].forEach(function(ev){
+    document.getElementById('main').addEventListener(ev, function(){ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } });
+  });
+  var mouseTimer = null;
+  document.getElementById('main').addEventListener('mousedown', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip) return;
+    mouseTimer = setTimeout(function(){ promptExact(chip); mouseTimer=null; }, 550);
+  });
+  ['mouseup','mouseleave'].forEach(function(ev){
+    document.getElementById('main').addEventListener(ev, function(){ if(mouseTimer){ clearTimeout(mouseTimer); mouseTimer=null; } });
+  });
+  function promptExact(chip){
+    var key = chip.getAttribute('data-key');
+    var cur = getCount(key);
+    var goal = CATALOG.goal;
+    var val = window.prompt('보유 마릿수를 입력하세요 (5세트 목표 ' + goal + '마리)', String(cur));
+    if(val === null) return;
+    var n = parseInt(val, 10);
+    if(isNaN(n) || n < 0) return;
+    setCount(key, n);
+    refreshChip(key);
+    render();
+  }
+
+  document.getElementById('editToggle').addEventListener('click', function(){
+    editMode = !editMode;
+    render();
+  });
+  function switchTab(tab, btn){
+    curTab = tab;
+    ['tabLoc','tabSpecial','tabDashboard'].forEach(function(id){
+      document.getElementById(id).classList.toggle('active', document.getElementById(id) === btn);
+    });
+    render();
+  }
+  document.getElementById('tabLoc').addEventListener('click', function(){ switchTab('loc', this); });
+  document.getElementById('tabSpecial').addEventListener('click', function(){ switchTab('special', this); });
+  document.getElementById('tabDashboard').addEventListener('click', function(){ switchTab('dashboard', this); });
+  document.getElementById('search').addEventListener('input', function(){
+    // 대소문자는 매칭 시 내부에서 처리하고, 연산자(&;!()=)는 원문 그대로 유지해야
+    // 하니 여기서는 앞뒤 공백만 정리한다.
+    searchTerm = this.value.trim();
+    applyFilters();
+  });
+  document.getElementById('filterBtn').addEventListener('click', function(){
+    onlyIncomplete = !onlyIncomplete;
+    this.classList.toggle('on', onlyIncomplete);
+    applyFilters();
+  });
+  document.getElementById('expandBtn').addEventListener('click', function(){
+    allOpen = !allOpen;
+    this.textContent = allOpen ? '모두 접기' : '모두 펼치기';
+    document.querySelectorAll('details.loc').forEach(function(d){ d.open = allOpen; });
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', function(){
+    var payload = {savedAt: new Date().toISOString(), catalog: CATALOG, state: state, wait: waitState};
+    var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = '피크민데코_백업_' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', function(){
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        var incomingState = data.state || data;
+        var incomingCatalog = data.catalog || null;
+        var incomingWait = data.wait || null;
+        var msg = '가져온 데이터로 현재 진행 상황을' + (incomingCatalog ? '(카탈로그 포함) ' : ' ') +
+          '덮어쓸까요?\n(' + (data.savedAt || '알 수 없는 시각') + ' 백업)';
+        if(!confirm(msg)) return;
+        state = incomingState;
+        if(incomingWait) waitState = incomingWait;
+        if(incomingCatalog) CATALOG = incomingCatalog;
+        // migrate an older backup's flat/lumped special data into per-deco categories
+        if(!CATALOG.specialGroups){
+          CATALOG.specialGroups = regroupSpecialByName(CATALOG.special || []);
+        } else if(CATALOG.specialGroups.length === 1 && CATALOG.specialGroups[0].id === 'sg-1' && CATALOG.specialGroups[0].name === '스페셜'){
+          CATALOG.specialGroups = regroupSpecialByName(CATALOG.specialGroups[0].items);
+        }
+        if(!CATALOG.goal) CATALOG.goal = 5;
+        if(!CATALOG.colors) CATALOG.colors = deepClone(DEFAULT_CATALOG.colors);
+        // 예전(색상별 전역) 대기 피크민 기록은 새 구조와 호환되지 않아 정리한다
+        Object.keys(state).forEach(function(k){ if(k.indexOf('waiting::')===0) delete state[k]; });
+        migrateSplitColorCombos();
+        stripCatalogImages();
+        saveState(); saveCatalog(); saveWaitState();
+        render();
+        alert('가져오기를 완료했어요.');
+      }catch(err){
+        alert('가져오기에 실패했어요: ' + err.message + '\n(올바른 백업 JSON 파일인지 확인해주세요)');
+      }
+    };
+    reader.onerror = function(){
+      alert('파일을 읽는 중 오류가 발생했어요. iCloud에서 파일이 아직 다운로드 중이면 잠시 후 다시 시도해주세요.');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    if(!confirm('모든 수집 기록을 초기화할까요? 이 작업은 되돌릴 수 없습니다. (아이템/색상 구성은 유지됩니다)')) return;
+    state = {};
+    saveState();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
