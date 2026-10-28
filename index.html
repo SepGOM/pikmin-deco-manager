@@ -95,10 +95,10 @@
     color:var(--text-dim);font-size:12.5px;white-space:nowrap;}
   .icon-btn.on{color:var(--accent);border-color:var(--accent);}
   main{padding:10px 12px 30px;display:flex;flex-direction:column;gap:10px;}
-  /* 화면이 넓어지면 카테고리 카드를 최대 2열까지만 - 아이템 카드처럼 더 늘어나지
-     않고 딱 2열에서 고정된다(3열 이상은 카드 하나가 너무 좁아져 오히려 안 좋음). */
+  /* 화면 너비에 맞춰 카드 열 수가 자동으로 늘어난다(카드 최소 너비 320px 기준:
+     ~700px 2열, ~1010px 3열, ~1340px 4열 ...). */
   @media (min-width:700px){
-    main{display:grid;grid-template-columns:repeat(2,1fr);align-items:start;}
+    main{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start;}
   }
   .addLocBtn{display:block;width:100%;padding:10px;border-radius:12px;border:1px dashed var(--border);
     background:transparent;color:var(--text-dim);font-size:13px;grid-column:1/-1;}
