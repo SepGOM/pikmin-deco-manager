@@ -86,6 +86,8 @@
   .dash-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;
     border:1px solid rgba(0,0,0,.15);vertical-align:middle;flex-shrink:0;}
   .dash-table thead th{white-space:nowrap;}
+  .dash-table td.dash-hi{font-weight:800;color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, transparent);}
+  .dash-table td.dash-lo{font-weight:800;color:var(--danger);background:color-mix(in srgb, var(--danger) 12%, transparent);}
   .dash-dots{display:flex;flex-wrap:nowrap;gap:3px;align-items:center;}
   .dash-cat{vertical-align:top;font-weight:700;color:var(--text);white-space:nowrap;}
   .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
@@ -1270,7 +1272,16 @@
     return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + sum + '</td></tr>';
   }
   function dashPctRow(label, metArr, totalArr){
-    var cells = metArr.map(function(m,i){ return '<td>' + pctStr(m, totalArr[i]) + '</td>'; }).join('');
+    // 표시되는 값(소수 첫째 자리)을 기준으로 최고/최저를 잡아야 같은 값이 한쪽만 강조되지 않는다.
+    // 종류가 0개인 색은 비교에서 뺀다. 비교 대상이 2개 미만이거나 전부 같으면 강조하지 않는다.
+    var vals = metArr.map(function(m,i){ return totalArr[i] ? Math.round(m/totalArr[i]*1000) : null; });
+    var valid = vals.filter(function(v){ return v !== null; });
+    var hi = Math.max.apply(null, valid), lo = Math.min.apply(null, valid);
+    var mark = valid.length >= 2 && hi !== lo;
+    var cells = metArr.map(function(m,i){
+      var cls = !mark || vals[i] === null ? '' : vals[i] === hi ? ' class="dash-hi"' : vals[i] === lo ? ' class="dash-lo"' : '';
+      return '<td' + cls + '>' + pctStr(m, totalArr[i]) + '</td>';
+    }).join('');
     var sumM = metArr.reduce(function(a,b){ return a+b; }, 0);
     var sumT = totalArr.reduce(function(a,b){ return a+b; }, 0);
     return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + pctStr(sumM,sumT) + '</td></tr>';
