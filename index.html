@@ -1459,13 +1459,13 @@
     var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
     var idxBadge = (combo.idx!=null) ? '<span class="chip-idx">' + (combo.idx+1) + '</span>' : '';
     return '<div class="chip' + (owned?' owned':'') + (cleared?' cleared':'') + (met?' met':'') +
-      '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + ' title="' + esc(combo.color) + '">' +
+      '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + (item.isRare ? ' data-rare="1"' : '') + ' title="' + esc(combo.color) + '">' +
       (owned ? '<button class="chip-minus" data-key="' + key + '">−</button>' : '') +
       idxBadge +
       '<button class="chip-plus" data-key="' + key + '">' +
       '<span class="inner" style="background:' + (owned ? bg : 'var(--chip-off)') + '">' +
       '<span class="dot" style="--dotcolor:' + meta.hex + '"></span></span></button>' +
-      '<span class="n">' + n + '/' + (showWait ? getWait(item.id, combo.color) : goal) + '</span></div>';
+      '<span class="n">' + (item.isRare ? n : n + '/' + (showWait ? getWait(item.id, combo.color) : goal)) + '</span></div>';
   }
 
   function itemHtml(item, list, kind){
@@ -1912,7 +1912,8 @@
       var pct = Math.min(n/goal,1);
       var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
       chip.querySelector('.inner').style.background = owned ? bg : 'var(--chip-off)';
-      chip.querySelector('.n').textContent = n + '/' + (chip.hasAttribute('data-wait') ? getWait(key.split('::')[0], color) : goal);
+      chip.querySelector('.n').textContent = chip.hasAttribute('data-rare') ? String(n)
+        : n + '/' + (chip.hasAttribute('data-wait') ? getWait(key.split('::')[0], color) : goal);
       var minusBtn = chip.querySelector('.chip-minus');
       if(owned && !minusBtn){
         minusBtn = document.createElement('button');
