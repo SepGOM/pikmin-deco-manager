@@ -1427,23 +1427,30 @@
   }
 
 
-  function chipHtml(combo, item){
+  // 대기 개념이 있는 칩(위치 탭의 비희귀 데코)은 목표 개수 대신 "데코/대기"로 보여준다 -
+  // 목표(5마리)를 채우면 칩이 금색으로 바뀌니 분모에 따로 적을 필요가 없다. 한 색이
+  // 여러 칩으로 나뉜 경우엔 대기가 색상당 하나라 칩마다 붙일 수 없어 기존 n/목표 그대로.
+  function chipShowsWait(combo, item, kind){
+    return kind === 'loc' && !item.isRare && combo.idx == null;
+  }
+  function chipHtml(combo, item, kind){
     var key = combo.key;
     var n = getCount(key);
     var goal = CATALOG.goal;
+    var showWait = chipShowsWait(combo, item, kind);
     var meta = colorMeta(combo.color);
     var owned = n>0, cleared = n>=1, met = n>=goal;
     var pct = Math.min(n/goal,1);
     var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
     var idxBadge = (combo.idx!=null) ? '<span class="chip-idx">' + (combo.idx+1) + '</span>' : '';
     return '<div class="chip' + (owned?' owned':'') + (cleared?' cleared':'') + (met?' met':'') +
-      '" data-key="' + key + '" title="' + esc(combo.color) + '">' +
+      '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + ' title="' + esc(combo.color) + '">' +
       (owned ? '<button class="chip-minus" data-key="' + key + '">−</button>' : '') +
       idxBadge +
       '<button class="chip-plus" data-key="' + key + '">' +
       '<span class="inner" style="background:' + (owned ? bg : 'var(--chip-off)') + '">' +
       '<span class="dot" style="--dotcolor:' + meta.hex + '"></span></span></button>' +
-      '<span class="n">' + n + '/' + goal + '</span></div>';
+      '<span class="n">' + n + '/' + (showWait ? getWait(item.id, combo.color) : goal) + '</span></div>';
   }
 
   function itemHtml(item, list, kind){
@@ -1457,7 +1464,7 @@
     // 순서가 색상별로 뭉쳐 있지 않고 섞여 있을 때(빨강-노랑-보라-파랑-빨강 …) 그
     // 순서 그대로 맞추기 위함. 위치 데코는 이런 다중 디자인 개념이 없으니 필요 없다.
     var chips = combos.map(function(cb, pos){
-      var chip = chipHtml(cb, item);
+      var chip = chipHtml(cb, item, kind);
       if(!editMode || kind !== 'special') return chip;
       var canPrev = pos > 0, canNext = pos < combos.length-1;
       return '<div class="chip-wrap">' + chip + '<div class="chip-reorder">' +
@@ -1879,7 +1886,7 @@
       var pct = Math.min(n/goal,1);
       var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
       chip.querySelector('.inner').style.background = owned ? bg : 'var(--chip-off)';
-      chip.querySelector('.n').textContent = n + '/' + goal;
+      chip.querySelector('.n').textContent = n + '/' + (chip.hasAttribute('data-wait') ? getWait(key.split('::')[0], color) : goal);
       var minusBtn = chip.querySelector('.chip-minus');
       if(owned && !minusBtn){
         minusBtn = document.createElement('button');
