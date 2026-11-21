@@ -522,11 +522,16 @@
   }
   // 스페셜(이벤트) 데코는 "대기" 개념이 없으니 총 마릿수만 보여준다. 검색어에
   // "데코"/"대기" 키워드가 쓰였으면(searchQuery.displayMode) 그 쪽만 표기한다.
+  // 대기 개념이 있는 아이템: 위치 탭의 일반 데코만. 스페셜·희귀·획득 인정 안 하는
+  // 아이템(골드 티켓 등)은 대기 피크민이 없으니 대기 표시/입력을 모두 건너뛴다.
+  function itemHasWait(item, kind){
+    return kind === 'loc' && !item.isRare && !item.optional;
+  }
   function itemHeadcountHtml(item, kind){
     var deco = itemDecoTotal(item);
     // 희귀 종류는 스페셜(이벤트)과 마찬가지로 "대기" 개념 자체가 없으니(항상 0)
     // 총 마릿수만 보여준다 - 의미 없는 "대기 0"을 굳이 표시하지 않는다.
-    if(kind === 'special' || item.isRare){
+    if(!itemHasWait(item, kind)){
       return '<div class="headcount-line">총 <span class="hc-deco">' + deco + '</span>마리</div>';
     }
     var wait = itemWaitTotal(item);
@@ -1446,7 +1451,7 @@
   // 목표(5마리)를 채우면 칩이 금색으로 바뀌니 분모에 따로 적을 필요가 없다. 한 색이
   // 여러 칩으로 나뉜 경우엔 대기가 색상당 하나라 칩마다 붙일 수 없어 기존 n/목표 그대로.
   function chipShowsWait(combo, item, kind){
-    return kind === 'loc' && !item.isRare && combo.idx == null;
+    return itemHasWait(item, kind) && combo.idx == null;
   }
   function chipHtml(combo, item, kind){
     var key = combo.key;
@@ -1459,13 +1464,13 @@
     var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
     var idxBadge = (combo.idx!=null) ? '<span class="chip-idx">' + (combo.idx+1) + '</span>' : '';
     return '<div class="chip' + (owned?' owned':'') + (cleared?' cleared':'') + (met?' met':'') +
-      '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + (item.isRare ? ' data-rare="1"' : '') + ' title="' + esc(combo.color) + '">' +
+      '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + ' title="' + esc(combo.color) + '">' +
       (owned ? '<button class="chip-minus" data-key="' + key + '">−</button>' : '') +
       idxBadge +
       '<button class="chip-plus" data-key="' + key + '">' +
       '<span class="inner" style="background:' + (owned ? bg : 'var(--chip-off)') + '">' +
       '<span class="dot" style="--dotcolor:' + meta.hex + '"></span></span></button>' +
-      '<span class="n">' + (item.isRare ? n : n + '/' + (showWait ? getWait(item.id, combo.color) : goal)) + '</span></div>';
+      '<span class="n">' + (showWait ? n + '/' + getWait(item.id, combo.color) : n) + '</span></div>';
   }
 
   function itemHtml(item, list, kind){
@@ -1490,8 +1495,8 @@
     var customBadge = item.colorTargets ? '<span class="loc-badge" title="색상별 알 개수 지정됨">🎯</span>' : '';
     var rareItemBadge = item.isRare ? '<span class="loc-badge" title="희귀 데코 - 같은 이름 일반 데코와 마릿수 연동">🎁</span>' : '';
     var optionalBadge = item.optional ? '<span class="loc-badge" title="획득 인정 안 함 - 없어도 카테고리 완료로 처리">🎫</span>' : '';
-    var waitTotal = (kind==='loc' && !item.isRare) ? itemWaitTotal(item) : 0;
-    var waitBtn = (kind==='loc' && !item.isRare) ? '<button class="waitItemBtn" data-item-id="' + item.id + '" title="대기 중인 피크민">🥚' +
+    var waitTotal = itemHasWait(item, kind) ? itemWaitTotal(item) : 0;
+    var waitBtn = itemHasWait(item, kind) ? '<button class="waitItemBtn" data-item-id="' + item.id + '" title="대기 중인 피크민">🥚' +
       (waitTotal>0 ? waitTotal : '') + '</button>' : '';
     var editBtns = editMode ? '<div class="edit-btns"><button class="moveItemBtn" data-dir="-1">▲</button>' +
       '<button class="moveItemBtn" data-dir="1">▼</button><button class="editItemBtn">✏️</button>' +
@@ -1912,8 +1917,7 @@
       var pct = Math.min(n/goal,1);
       var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
       chip.querySelector('.inner').style.background = owned ? bg : 'var(--chip-off)';
-      chip.querySelector('.n').textContent = chip.hasAttribute('data-rare') ? String(n)
-        : n + '/' + (chip.hasAttribute('data-wait') ? getWait(key.split('::')[0], color) : goal);
+      chip.querySelector('.n').textContent = chip.hasAttribute('data-wait') ? n + '/' + getWait(key.split('::')[0], color) : String(n);
       var minusBtn = chip.querySelector('.chip-minus');
       if(owned && !minusBtn){
         minusBtn = document.createElement('button');
@@ -1977,7 +1981,7 @@
       return;
     }
 
-    if(item && found0.kind === 'loc' && !item.isRare){
+    if(item && itemHasWait(item, found0.kind)){
       // 색상 칩을 등록하면 대기 중이던 피크민 하나가 데코로 자란 걸로 보고 대기 수를
       // 그만큼 줄인다(0 밑으로는 안 내려감 - 큰 모종으로 대기 없이 바로 데코가 된
       // 경우엔 그냥 무시됨). 등록을 취소하면 다시 대기로 돌려놓는다.
