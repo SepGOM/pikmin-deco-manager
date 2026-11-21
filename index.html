@@ -194,6 +194,7 @@
   footer.bar button{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg);
     color:var(--text);font-size:12px;font-weight:600;}
   footer.bar button.danger{color:var(--danger);border-color:var(--danger);}
+  footer.bar button:disabled{opacity:.4;}
   .empty{text-align:center;color:var(--text-dim);font-size:13px;padding:30px 10px;grid-column:1/-1;}
   input[type=file]{display:none;}
   /* modal */
@@ -275,6 +276,7 @@
 <main id="main"></main>
 
 <footer class="bar">
+  <button id="undoBtn" disabled>↩ 되돌리기</button>
   <button id="exportBtn">📤 내보내기</button>
   <button id="importBtn">📥 가져오기</button>
   <button class="danger" id="resetBtn">초기화</button>
@@ -400,8 +402,8 @@
   var editMode = false;
   var colorFilter = null;
 
-  function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY, JSON.stringify(CATALOG)); }catch(e){} }
-  function saveState(){ try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){} }
+  function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY, JSON.stringify(CATALOG)); }catch(e){} noteChange(); }
+  function saveState(){ try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){} noteChange(); }
 
   function colorMeta(key){
     for(var i=0;i<CATALOG.colors.length;i++) if(CATALOG.colors[i].key === key) return CATALOG.colors[i];
@@ -474,7 +476,7 @@
   var WAIT_KEY = 'pikminDecoWait_v1';
   var waitState = {};
   try { waitState = JSON.parse(localStorage.getItem(WAIT_KEY) || '{}'); } catch(e){ waitState = {}; }
-  function saveWaitState(){ try{ localStorage.setItem(WAIT_KEY, JSON.stringify(waitState)); }catch(e){} }
+  function saveWaitState(){ try{ localStorage.setItem(WAIT_KEY, JSON.stringify(waitState)); }catch(e){} noteChange(); }
   function getWait(itemId, color){ return waitState[comboKey(itemId,color)] || 0; }
   function setWait(itemId, color, val){
     val = Math.max(0, Math.min(9999, val|0));
@@ -2213,11 +2215,43 @@
   });
 
   document.getElementById('resetBtn').addEventListener('click', function(){
-    if(!confirm('모든 수집 기록을 초기화할까요? 이 작업은 되돌릴 수 없습니다. (아이템/색상 구성은 유지됩니다)')) return;
+    if(!confirm('모든 수집 기록을 초기화할까요? (아이템/색상 구성은 유지됩니다. 직후에 "되돌리기"로 취소할 수 있어요)')) return;
     state = {};
     saveState();
     render();
   });
+
+  // ---------- 되돌리기(직전 수정 한 번) ----------
+  // 저장 함수(saveState/saveCatalog/saveWaitState)가 불릴 때마다 "저장 직전의 전체
+  // 상태"를 기억해 둔다. 한 번의 동작이 저장 함수를 여러 번 불러도(칩 탭 = 데코+대기+
+  // 희귀 포인트) 같은 틱 안이면 하나의 수정으로 묶는다. 새로고침하면 사라진다.
+  var lastSnap, undoSnap = null, pendingPre = null, restoringSnap = false;
+  function snapshotAll(){ return JSON.stringify({state:state, wait:waitState, catalog:CATALOG}); }
+  function noteChange(){
+    if(lastSnap === undefined || restoringSnap || pendingPre !== null) return;
+    pendingPre = lastSnap;
+    setTimeout(function(){
+      var now = snapshotAll();
+      if(now !== pendingPre){ undoSnap = pendingPre; lastSnap = now; }
+      pendingPre = null;
+      syncUndoBtn();
+    }, 0);
+  }
+  function syncUndoBtn(){ document.getElementById('undoBtn').disabled = !undoSnap; }
+  function undoLast(){
+    if(!undoSnap) return;
+    var snap = JSON.parse(undoSnap);
+    restoringSnap = true;
+    state = snap.state; waitState = snap.wait; CATALOG = snap.catalog;
+    saveState(); saveWaitState(); saveCatalog();
+    restoringSnap = false;
+    lastSnap = undoSnap; undoSnap = null;
+    if(colorFilter && !CATALOG.colors.some(function(c){ return c.key === colorFilter; })) colorFilter = null;
+    syncUndoBtn();
+    render();
+  }
+  document.getElementById('undoBtn').addEventListener('click', undoLast);
+  lastSnap = snapshotAll();
 
   render();
 })();
