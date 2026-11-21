@@ -381,8 +381,22 @@
   var onlyIncomplete = false;
   var searchTerm = '';
   var searchQuery = null; // parseSearchQuery(searchTerm)의 결과 - {ast, colors, displayMode} 또는 null
-  var allOpen = false;
+  // 카테고리 펼침 상태. 필터(검색/색상/미완료만)가 없을 땐 사용자가 직접 여닫은 값
+  // (openGroupIds)을 쓰고, 필터가 걸려 있는 동안은 "결과가 있는 카테고리를 자동으로
+  // 펼친" 임시 상태(filterOpenIds)를 쓴다. 임시 상태는 필터를 풀면 버려져서 원래
+  // 상태로 돌아가고, 필터를 새로 걸거나 바꿀 때(pendingFreshOpen)만 다시 계산한다 -
+  // 대기/데코를 수정하느라 다시 그릴 때마다 접어둔 카테고리가 펼쳐지지 않게 하기 위함.
   var openGroupIds = {};
+  var filterOpenIds = {};
+  var pendingFreshOpen = false;
+  function filterActive(){ return !!(searchTerm || onlyIncomplete || colorFilter); }
+  function isGroupOpen(id){
+    if(filterActive() && (id in filterOpenIds)) return filterOpenIds[id];
+    return !!openGroupIds[id];
+  }
+  function setGroupOpenState(id, open){
+    if(filterActive()) filterOpenIds[id] = open; else openGroupIds[id] = open;
+  }
   var editMode = false;
   var colorFilter = null;
 
@@ -1419,6 +1433,7 @@
         p.addEventListener('click', function(){
           var color = p.getAttribute('data-color');
           colorFilter = (colorFilter === color) ? null : color;
+          pendingFreshOpen = true;
           // 대기/데코 마릿수 표시도 필터 색상 기준으로 다시 그려야 하니 통째로 다시 렌더
           render();
         });
@@ -1522,7 +1537,7 @@
       '<button class="moveGroupBtn" data-group="' + group.id + '" data-kind="' + kind + '" data-dir="1">▼</button>' +
       '<button class="editGroupBtn" data-group="' + group.id + '" data-kind="' + kind + '">✏️</button></div>' : '';
     var isPinned = kind==='special' && !!group.pinned;
-    return '<details class="loc' + (complete?' loc-complete':'') + (goalComplete?' loc-goalmet':'') + (isPinned?' loc-pinned':'') + '" data-group-id="' + group.id + '" data-kind="' + kind + '"' + (openGroupIds[group.id]?' open':'') + '>' +
+    return '<details class="loc' + (complete?' loc-complete':'') + (goalComplete?' loc-goalmet':'') + (isPinned?' loc-pinned':'') + '" data-group-id="' + group.id + '" data-kind="' + kind + '"' + (isGroupOpen(group.id)?' open':'') + '>' +
       '<summary><div class="loc-row"><div class="loc-title">' + esc(group.name) + pinBadge + badge + rareBadge + '</div>' +
       '<div class="loc-meta">' + editGroupBtn + '<span class="loc-count">' + owned + '/' + total + '</span><span class="chev"></span></div>' +
       '</div>' + groupHeadcountHtml(group, kind) + almost + '<div class="loc-progress"><div style="width:' + pct + '%"></div></div></summary>' +
@@ -1531,11 +1546,6 @@
 
   function render(){
     var main = document.getElementById('main');
-    // remember which sections are currently open/closed before rebuilding the DOM,
-    // so edits/reorders/adds don't collapse sections the user had open
-    main.querySelectorAll('details.loc').forEach(function(d){
-      openGroupIds[d.getAttribute('data-group-id')] = d.open;
-    });
     document.getElementById('editToggle').classList.toggle('on', editMode);
     // 현황판 탭은 검색/필터가 적용되는 목록이 아니라 통계 요약이라, 그 UI들을
     // 숨기고 별도 렌더 경로로 빠진다.
@@ -1816,7 +1826,9 @@
   function applyFilters(){
     var main = document.getElementById('main');
     searchQuery = parseSearchQuery(searchTerm);
-    var anyFilterActive = !!(searchTerm || onlyIncomplete || colorFilter);
+    var anyFilterActive = filterActive();
+    var freshOpen = pendingFreshOpen; pendingFreshOpen = false;
+    if(!anyFilterActive || freshOpen) filterOpenIds = {};
     var matchedGroupCount = 0, filteredDeco = 0, filteredWait = 0;
     main.querySelectorAll('.item').forEach(function(el){
       var found = findItemAndList(el.getAttribute('data-item-id'));
@@ -1844,12 +1856,14 @@
     var locs = main.querySelectorAll('details.loc');
     locs.forEach(function(loc){
       var visible = loc.querySelectorAll('.item:not([style*="display: none"])').length;
+      var locId = loc.getAttribute('data-group-id');
       if(anyFilterActive){
         loc.style.display = visible ? '' : 'none';
-        if(visible) loc.open = true;
+        if(visible && freshOpen) filterOpenIds[locId] = true;
       } else {
         loc.style.display = '';
       }
+      loc.open = isGroupOpen(locId);
       if(visible){
         matchedGroupCount++;
         var group = groupsFor(loc.getAttribute('data-kind')).find(function(g){ return String(g.id) === loc.getAttribute('data-group-id'); });
@@ -1871,6 +1885,18 @@
         infoEl.style.display = 'none';
       }
     }
+    syncExpandBtn();
+  }
+
+  function visibleLocs(){
+    return Array.prototype.filter.call(document.querySelectorAll('#main details.loc'), function(d){
+      return d.style.display !== 'none';
+    });
+  }
+  function syncExpandBtn(){
+    var v = visibleLocs();
+    var allOpen = v.length > 0 && v.every(function(d){ return d.open; });
+    document.getElementById('expandBtn').textContent = allOpen ? '모두 접기' : '모두 펼치기';
   }
 
   function refreshChip(key){
@@ -2081,6 +2107,7 @@
   });
   function switchTab(tab, btn){
     curTab = tab;
+    pendingFreshOpen = true;
     ['tabLoc','tabSpecial','tabDashboard'].forEach(function(id){
       document.getElementById(id).classList.toggle('active', document.getElementById(id) === btn);
     });
@@ -2093,18 +2120,33 @@
     // 대소문자는 매칭 시 내부에서 처리하고, 연산자(&;!()=)는 원문 그대로 유지해야
     // 하니 여기서는 앞뒤 공백만 정리한다.
     searchTerm = this.value.trim();
+    pendingFreshOpen = true;
     applyFilters();
   });
   document.getElementById('filterBtn').addEventListener('click', function(){
     onlyIncomplete = !onlyIncomplete;
     this.classList.toggle('on', onlyIncomplete);
+    pendingFreshOpen = true;
     applyFilters();
   });
   document.getElementById('expandBtn').addEventListener('click', function(){
-    allOpen = !allOpen;
-    this.textContent = allOpen ? '모두 접기' : '모두 펼치기';
-    document.querySelectorAll('details.loc').forEach(function(d){ d.open = allOpen; });
+    // 지금 보이는 카테고리가 전부 펼쳐져 있으면 접고, 하나라도 접혀 있으면 전부 펼친다
+    var v = visibleLocs();
+    var next = !(v.length > 0 && v.every(function(d){ return d.open; }));
+    v.forEach(function(d){
+      d.open = next;
+      setGroupOpenState(d.getAttribute('data-group-id'), next);
+    });
+    syncExpandBtn();
   });
+  // 사용자가 카테고리 제목을 눌러 직접 여닫은 것만 상태로 기록한다(자동 펼침과 구분).
+  document.getElementById('main').addEventListener('click', function(e){
+    var sum = e.target.closest ? e.target.closest('details.loc > summary') : null;
+    if(!sum || e.defaultPrevented) return;
+    var d = sum.parentNode;
+    setGroupOpenState(d.getAttribute('data-group-id'), !d.open);
+  });
+  document.getElementById('main').addEventListener('toggle', syncExpandBtn, true);
 
   document.getElementById('exportBtn').addEventListener('click', function(){
     var payload = {savedAt: new Date().toISOString(), catalog: CATALOG, state: state, wait: waitState};
