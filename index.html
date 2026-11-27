@@ -268,9 +268,6 @@
     background:var(--bg-elev);color:var(--text-dim);border:1px solid var(--border);
     font-size:12px;line-height:1;padding:0;z-index:2;font-weight:700;-webkit-appearance:none;appearance:none;}
   .chip-minus:active{background:var(--danger);color:#fff;border-color:var(--danger);}
-  .chip-idx{position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;
-    background:var(--pin);color:#fff;font-size:8.5px;font-weight:800;line-height:14px;
-    text-align:center;z-index:2;pointer-events:none;}
   .chip-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
   .chip-reorder{display:flex;gap:4px;}
   .chipMoveBtn{width:28px;height:26px;border-radius:7px;border:1px solid var(--border);
@@ -299,14 +296,16 @@
   .modal input[type=text],.modal input[type=number]{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);
     background:var(--bg);color:var(--text);font-size:14px;}
   .modal input[type=color]{width:44px;height:34px;border:1px solid var(--border);border-radius:8px;padding:2px;background:var(--bg);}
-  .modal .colorgrid{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
-  .modal .colorchoice{display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:9px;
-    padding:6px 9px;font-size:12.5px;background:var(--bg);}
-  .modal .colorchoice .sw{width:12px;height:12px;border-radius:50%;}
-  .modal .colorchoice input{margin:0;}
-  .modal .colorTargetInput{display:none;width:34px;padding:2px 4px;border-radius:6px;border:1px solid var(--border);
-    background:var(--bg-elev);color:var(--text);font-size:12px;}
-  .modal .customTargetsOn .colorTargetInput{display:inline-block;}
+  .modal .colorgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;margin-top:4px;}
+  .modal .customTargetsOn .colorgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+  .modal .colorchoice{display:flex;align-items:center;gap:6px;margin:0;min-height:42px;border:1px solid var(--border);
+    border-radius:9px;padding:5px 8px;font-size:12.5px;white-space:nowrap;background:var(--bg);}
+  .modal .colorchoice .sw{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .modal .colorchoice input{margin:0;flex-shrink:0;}
+  /* 모든 숫자 입력칸을 100% 너비로 만드는 규칙보다 우선해야 알 개수 칸이 작게 유지된다 */
+  .modal .colorchoice input.colorTargetInput{display:none;width:46px;margin-left:auto;padding:4px;text-align:center;
+    border-radius:6px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);font-size:12.5px;}
+  .modal .customTargetsOn .colorchoice input.colorTargetInput{display:inline-block;}
   .modal .customToggleRow{display:flex;align-items:flex-start;gap:7px;margin-top:10px;font-size:11.5px;
     color:var(--text-dim);line-height:1.4;}
   .modal .customToggleRow input{margin-top:2px;}
@@ -1656,11 +1655,9 @@
     var owned = n>0, cleared = isCollected(key), met = n>=goal;
     var pct = Math.min(n/goal,1);
     var bg = 'color-mix(in srgb, ' + meta.hex + ' ' + Math.round(10+pct*80) + '%, var(--chip-off))';
-    var idxBadge = (combo.idx!=null) ? '<span class="chip-idx">' + (combo.idx+1) + '</span>' : '';
     return '<div class="chip' + (owned?' owned':'') + (cleared?' cleared':'') + (met?' met':'') +
       '" data-key="' + key + '"' + (showWait ? ' data-wait="1"' : '') + ' title="' + esc(combo.color) + '">' +
       (owned ? '<button class="chip-minus" data-key="' + key + '">−</button>' : '') +
-      idxBadge +
       '<button class="chip-plus" data-key="' + key + '">' +
       '<span class="inner" style="background:' + (owned ? bg : cleared ? 'var(--bg-elev)' : 'var(--chip-off)') + '">' +
       '<span class="dot" style="--dotcolor:' + meta.hex + '"></span></span></button>' +
