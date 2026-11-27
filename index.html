@@ -213,6 +213,12 @@
   .pinGroupBtn.on{background:var(--met);border-color:var(--met);color:#fff;}
   .rareUnlockToggleBtn{width:auto!important;padding:0 6px;font-size:10px;white-space:nowrap;
     color:var(--text-dim);}
+  .rare-lock{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    border:1px dashed color-mix(in srgb, var(--pin) 55%, var(--border));border-radius:12px;padding:8px 10px;
+    font-size:11.5px;color:var(--text-dim);}
+  .rareUnlockBtn{border:1px solid color-mix(in srgb, var(--pin) 55%, var(--border));border-radius:8px;padding:5px 10px;
+    background:color-mix(in srgb, var(--pin) 12%, var(--bg-elev));color:color-mix(in srgb, var(--pin) 70%, var(--text));
+    font-size:11.5px;font-weight:700;}
   .rareUnlockToggleBtn.on{background:color-mix(in srgb, var(--pin) 15%, var(--bg-elev));
     border-color:var(--pin);color:var(--pin);}
   .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 8px;row-gap:12px;justify-items:center;}
@@ -766,8 +772,24 @@
   function rareUnlockedKey(group){ return 'rareUnlocked::' + group.id; }
   function isRareUnlocked(group){
     if(state[rareUnlockedKey(group)]) return true;
-    if(groupBaseComplete(group)){ state[rareUnlockedKey(group)] = true; saveState(); return true; }
+    // 희귀를 이미 입력해둔 경우도 해금된 것으로 본다(게임에서 해금해야 얻을 수 있으므로)
+    if(groupBaseComplete(group) || groupRareOwned(group)){ state[rareUnlockedKey(group)] = true; saveState(); return true; }
     return false;
+  }
+  function groupRareOwned(group){
+    return group.items.some(function(it){
+      return it.isRare && itemCombos(it).some(function(cb){ return getCount(cb.key) > 0; });
+    });
+  }
+  // 해금 전 희귀는 게임처럼 감추고, 종류 수 합계(분모)에도 넣지 않는다.
+  function rareLocked(group){ return groupHasRare(group) && !isRareUnlocked(group); }
+  function visibleItems(group){
+    return rareLocked(group) ? group.items.filter(function(it){ return !it.isRare; }) : group.items;
+  }
+  function countableItems(){
+    var out = [];
+    CATALOG.locations.concat(CATALOG.specialGroups).forEach(function(g){ out = out.concat(visibleItems(g)); });
+    return out;
   }
   // 자동 판정과 무관하게 사용자가 직접 희귀 해금 상태를 켜고 끈다 - 게임사가 나중에
   // 색상을 추가해서(예: 얼음 피크민 후속 추가) 예전엔 완료됐던 카테고리가 자동
@@ -1212,7 +1234,7 @@
   var ALMOST_THRESHOLD = 3;
   function groupClearGap(group){
     var owned=0, total=0, missingMap={}, missingOrder=[];
-    group.items.forEach(function(it){
+    visibleItems(group).forEach(function(it){
       if(it.optional) return; // 획득 인정 안 함 - 없어도 카테고리 완료로 친다
       itemCombos(it).forEach(function(cb){
         var n = getCount(cb.key);
@@ -1253,7 +1275,7 @@
   // 카운트된다 - 1마리만 모아서는 5마리 달성에 안 잡힌다.
   function comboTotals(){
     var existOwned=0, existTotal=0, goalOwned=0, goalTotal=0;
-    allItemsFlat().forEach(function(it){
+    countableItems().forEach(function(it){
       itemCombos(it).forEach(function(cb){
         var n = getCount(cb.key);
         existOwned += Math.min(n, 1); existTotal += 1;
@@ -1265,7 +1287,7 @@
   function colorTotals(){
     var map = {};
     CATALOG.colors.forEach(function(c){ map[c.key] = {heads:0, deco:0, wait:0, met:0, total:0}; });
-    allItemsFlat().forEach(function(it){
+    countableItems().forEach(function(it){
       itemCombos(it).forEach(function(cb){
         var c = cb.color;
         if(!map[c]) map[c] = {heads:0, deco:0, wait:0, met:0, total:0};
@@ -1290,7 +1312,7 @@
     var groups = kind === 'special' ? CATALOG.specialGroups : CATALOG.locations;
     var deco=0, wait=0, existOwned=0, existTotal=0;
     groups.forEach(function(g){
-      g.items.forEach(function(it){
+      visibleItems(g).forEach(function(it){
         itemCombos(it).forEach(function(cb){
           if(colorFilter && cb.color !== colorFilter) return;
           var n = getCount(cb.key);
@@ -1313,14 +1335,14 @@
   // 위치(비희귀)/위치 희귀/이벤트(스페셜)/전체 4개 구간을 색상별로 집계.
   function allLocItems(){
     var out = [];
-    CATALOG.locations.forEach(function(g){ g.items.forEach(function(it){ out.push(it); }); });
+    CATALOG.locations.forEach(function(g){ visibleItems(g).forEach(function(it){ out.push(it); }); });
     return out;
   }
   // "위치(희귀 포함)" 집계와는 별개로, 희귀 종류만 따로 떼서 참고용으로 보여주는
   // 섹션에 쓴다 - 전체 합계에는 중복으로 더하지 않는다(이미 위치 집계에 포함됨).
   function locRareItems(){
     var out = [];
-    CATALOG.locations.forEach(function(g){ g.items.forEach(function(it){ if(it.isRare) out.push(it); }); });
+    CATALOG.locations.forEach(function(g){ visibleItems(g).forEach(function(it){ if(it.isRare) out.push(it); }); });
     return out;
   }
   function specialAllItems(){
@@ -1396,7 +1418,7 @@
     return groups.map(function(g){
       var gap = groupClearGap(g);
       if(!(gap.total>0 && gap.owned<gap.total)) return null;
-      var items = g.items.filter(function(it){ return !it.optional && itemMissingColors(it).length > 0; });
+      var items = visibleItems(g).filter(function(it){ return !it.optional && itemMissingColors(it).length > 0; });
       return items.length ? {name:g.name, items:items} : null;
     }).filter(Boolean);
   }
@@ -1609,7 +1631,7 @@
     var gap = groupClearGap(group);
     var owned = gap.owned, total = gap.total;
     var goalTotal=0, met=0;
-    group.items.forEach(function(it){
+    visibleItems(group).forEach(function(it){
       if(it.optional) return;
       itemCombos(it).forEach(function(cb){
         var n = getCount(cb.key);
@@ -1625,7 +1647,12 @@
     var hasRare = kind==='loc' && groupHasRare(group) && isRareUnlocked(group);
     var rareBadge = hasRare ? rareBadgeHtml(group) : '';
     var almost = kind==='loc' ? almostBannerHtml(gap.missing) : '';
-    var itemsHtml = group.items.map(function(it){ return itemHtml(it, group.items, kind); }).join('');
+    // 편집 모드에서는 잠긴 희귀도 보여 구성을 고칠 수 있게 한다
+    var hideRare = kind==='loc' && !editMode && rareLocked(group);
+    var lockRow = hideRare ? '<div class="rare-lock"><span>🔒 희귀 데코 · 일반 데코를 모두 모으면 열려요</span>' +
+      '<button type="button" class="rareUnlockBtn" data-group="' + group.id + '">이미 해금했어요</button></div>' : '';
+    var itemsHtml = lockRow + group.items.filter(function(it){ return !(hideRare && it.isRare); })
+      .map(function(it){ return itemHtml(it, group.items, kind); }).join('');
     var addBtn = editMode ? '<button class="addItemBtn" data-group="' + group.id + '" data-kind="' + kind + '" style="margin:4px 10px 8px;padding:8px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--text-dim);font-size:12px;width:calc(100% - 20px);">+ 아이템 추가</button>' : '';
     var pinBtn = (editMode && kind==='special') ? '<button class="pinGroupBtn' + (group.pinned?' on':'') + '" data-group="' + group.id + '" title="상단 고정">📌</button>' : '';
     // 자동 판정(비희귀 종류 전부 완료)과 무관하게 희귀 해금 표시를 수동으로 켜고 끌 수 있는
@@ -1751,6 +1778,15 @@
         e.preventDefault(); e.stopPropagation();
         var found = findItemAndList(btn.getAttribute('data-item-id'));
         if(found) openItemWaitModal(found.item);
+      });
+    });
+    main.querySelectorAll('.rareUnlockBtn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var group = CATALOG.locations.find(function(g){ return String(g.id) === btn.getAttribute('data-group'); });
+        if(!group) return;
+        state[rareUnlockedKey(group)] = true;
+        saveState();
+        render();
       });
     });
     main.querySelectorAll('.rare-badge').forEach(function(btn){
@@ -2060,6 +2096,8 @@
     var chip = target.closest('.chip');
     var key = target.getAttribute('data-key');
     var clickedColor = key.split('::')[1];
+    var preFound = findItemAndList(chip.closest('.item').getAttribute('data-item-id'));
+    var lockedGroup = preFound && preFound.kind === 'loc' && rareLocked(preFound.group) ? preFound.group : null;
     setCount(key, getCount(key) + (minusBtn ? -1 : 1));
 
     var itemEl = chip.closest('.item');
@@ -2126,7 +2164,7 @@
       if(locHcEl) locHcEl.outerHTML = groupHeadcountHtml(loc, loKind);
       var gap = groupClearGap(loc);
       var lOwned = gap.owned, lTotal = gap.total, lMet=0, lGoalTotal=0;
-      loc.items.forEach(function(it){ if(it.optional) return; itemCombos(it).forEach(function(cb){
+      visibleItems(loc).forEach(function(it){ if(it.optional) return; itemCombos(it).forEach(function(cb){
         var n = getCount(cb.key);
         lMet += (n>=CATALOG.goal ? 1 : 0); lGoalTotal += 1;
       }); });
@@ -2168,6 +2206,8 @@
         locEl.querySelector('.loc-title').appendChild(rbtn);
       }
     }
+    // 이번 등록으로 희귀가 해금됐으면 숨겨둔 희귀 종류가 보이도록 다시 그린다
+    if(lockedGroup && !rareLocked(lockedGroup)){ render(); return; }
     if(onlyIncomplete) applyFilters();
     updateHeader();
   });
@@ -2374,6 +2414,8 @@
     render();
   }
   document.getElementById('undoBtn').addEventListener('click', undoLast);
+  // 저장된 데이터의 해금 상태를 먼저 확정해야, 열자마자 "되돌리기"가 켜지지 않는다
+  CATALOG.locations.forEach(function(g){ if(groupHasRare(g)) isRareUnlocked(g); });
   lastSnap = snapshotAll();
 
   // ---------- 스크롤에 따라 접히는 헤더(휴대폰) ----------
