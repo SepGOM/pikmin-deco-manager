@@ -105,6 +105,10 @@
   .dash-table thead th{font-weight:700;color:var(--text-dim);}
   .dash-table td.dash-own{font-weight:700;}
   .dash-table td.dash-left{color:var(--met);}
+  .dash-grid .dash-card{-webkit-tap-highlight-color:transparent;}
+  .dash-card .v-total, .dash-card.show-total .v-left{display:none;}
+  .dash-card.show-total .v-total{display:inline;}
+  .dash-card.show-total td.dash-left{color:var(--text-dim);}
   .dash-table td.dash-hi{font-weight:800;color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, transparent);}
   .dash-table td.dash-lo{font-weight:800;color:var(--danger);background:color-mix(in srgb, var(--danger) 12%, transparent);}
   .dash-table .dash-card-sum td{font-weight:800;background:color-mix(in srgb, var(--text) 10%, var(--bg-elev));}
@@ -1400,6 +1404,35 @@
   // 구역별 타일: 색을 행, 항목을 열로 놓아 옆으로 넘기지 않고 본다. 넓은 화면은 네
   // 타일을 격자로, 좁은 화면은 선택한 구역(dashSection) 하나만 보여준다.
   var dashSection = 'all';
+  // 표별로 마지막 열을 "남음"과 "전체" 중 무엇으로 볼지(표를 누르면 바뀜, 이 기기에만 저장)
+  var DASHVIEW_KEY = 'pikminDecoDashView_v1';
+  var dashTotalView = {};
+  try { dashTotalView = JSON.parse(localStorage.getItem(DASHVIEW_KEY) || '{}') || {}; } catch(e){ dashTotalView = {}; }
+  function toggleDashView(card){
+    dashTotalView[card.getAttribute('data-card')] = card.classList.toggle('show-total');
+    try{ localStorage.setItem(DASHVIEW_KEY, JSON.stringify(dashTotalView)); }catch(e){}
+  }
+  // 글자를 드래그해 선택하거나 더블/세 번 클릭할 때 표가 바뀌지 않게 한다:
+  // 누른 곳에서 5px 이상 움직였으면 무시하고, 두 번째 클릭은 첫 번째 변경을 되돌린 뒤
+  // 그 이후 연속 클릭은 무시한다.
+  function bindDashViewToggle(card){
+    var down = null, firstToggled = false;
+    card.addEventListener('pointerdown', function(e){ down = {x:e.clientX, y:e.clientY}; });
+    card.addEventListener('click', function(e){
+      var start = down; down = null;
+      if(e.detail > 1){
+        if(e.detail === 2 && firstToggled) toggleDashView(card);
+        firstToggled = false;
+        return;
+      }
+      var dragged = !!start && Math.hypot(e.clientX - start.x, e.clientY - start.y) >= 5;
+      firstToggled = !dragged;
+      if(!dragged) toggleDashView(card);
+    });
+  }
+  function leftOrTotalHtml(left, total){
+    return '<span class="v-left">' + left + '</span><span class="v-total">' + total + '</span>';
+  }
   function dashboardCard(sect){
     var map = sect.map, showWait = sect.showWait;
     var keys = CATALOG.colors.map(function(c){ return c.key; });
@@ -1409,16 +1442,17 @@
     var marks = pctMarks(met, total);
     var row = function(label, d, w, m, t, cls, rowCls){
       return '<tr' + (rowCls ? ' class="' + rowCls + '"' : '') + '><td>' + label + '</td><td>' + d + '</td>' +
-        (showWait ? '<td>' + w + '</td>' : '') + '<td class="dash-own">' + m + '</td><td class="dash-left">' + (t-m) + '</td>' +
+        (showWait ? '<td>' + w + '</td>' : '') + '<td class="dash-own">' + m + '</td><td class="dash-left">' + leftOrTotalHtml(t-m, t) + '</td>' +
         '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + pctStr(m,t) + '</td></tr>';
     };
     var rows = keys.map(function(k,i){
       return row(colorDotHtml(k) + esc(k), deco[i], wait[i], met[i], total[i], marks[i]);
     }).join('') + row('합', sum(deco), sum(wait), sum(met), sum(total), '', 'dash-card-sum');
     var heads = '<span>총 <b>' + (sum(deco)+sum(wait)) + '</b>마리</span>';
-    return '<div class="dash-card' + (sect.id === dashSection ? ' sel' : '') + '"><div class="dash-card-head"><b>' + sectTitleHtml(sect.title, sect.note) + '</b>' + heads + '</div>' +
+    return '<div class="dash-card' + (sect.id === dashSection ? ' sel' : '') + (dashTotalView[sect.id] ? ' show-total' : '') +
+      '" data-card="' + sect.id + '"><div class="dash-card-head"><b>' + sectTitleHtml(sect.title, sect.note) + '</b>' + heads + '</div>' +
       '<table class="dash-table"><thead><tr><th>색</th><th>데코</th>' + (showWait ? '<th>대기</th>' : '') +
-      '<th>보유</th><th>남음</th><th>진행도</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<th>보유</th><th>' + leftOrTotalHtml('남음', '전체') + '</th><th>진행도</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
   function dashboardHtml(){
     var locMap = colorScopeTotals(allLocItems(), true);
@@ -1606,6 +1640,8 @@
     document.getElementById('dashSel').hidden = curTab !== 'dashboard';
     if(curTab === 'dashboard'){
       main.innerHTML = dashboardHtml();
+      // iOS에서도 눌림이 전달되도록 카드마다 직접 연결한다
+      Array.prototype.forEach.call(main.querySelectorAll('.dash-grid .dash-card'), bindDashViewToggle);
       updateHeader();
       return;
     }
