@@ -2367,7 +2367,7 @@
 
   // ---------- 스크롤에 따라 접히는 헤더(휴대폰) ----------
   // 위로 밀면(아래 내용 보기) 접고, 아래로 쓸면 펼친다. 흔들림에 깜빡이지 않게 같은
-  // 방향으로 일정 거리를 넘게 움직여야 반응하고(접기 20px, 펼치기는 조금 늦게 60px),
+  // 방향으로 일정 거리를 넘게 움직여야 반응하고(접기 20px, 펼치기는 조금 늦게 100px),
   // iOS 바운스 구간은 잘라낸다.
   var hdr = document.querySelector('header');
   var compactQuery = window.matchMedia('(max-width:699px), (max-height:500px)');
@@ -2397,7 +2397,7 @@
     if((delta > 0) !== (scrollRun > 0)) scrollRun = 0;
     scrollRun += delta;
     if(scrollRun > 20 && document.activeElement !== document.getElementById('search')) setCompact(true);
-    else if(scrollRun < -60) setCompact(false);
+    else if(scrollRun < -100) setCompact(false);
   }
   new ResizeObserver(syncHdrHeight).observe(hdr, {box:'border-box'});
   window.addEventListener('scroll', onScroll, {passive:true});
