@@ -150,8 +150,18 @@
   }
   .addLocBtn{display:block;width:100%;padding:10px;border-radius:12px;border:1px dashed var(--border);
     background:transparent;color:var(--text-dim);font-size:13px;grid-column:1/-1;}
+  /* clip은 고정(sticky) 제목을 막지 않는다. 지원하지 않는 브라우저는 앞의 hidden을 쓴다 */
   details.loc{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);
-    overflow:hidden;}
+    overflow:hidden;overflow:clip;}
+  /* 펼친 카테고리는 내용을 스크롤해도 제목과 마릿수가 앱 상단 바로 아래에 붙어 있다 */
+  /* summary는 background:inherit가 먹지 않아(브라우저 내부 구조) 카드와 같은 색을 직접 지정한다 */
+  details.loc[open] > summary{position:sticky;top:calc(var(--hdr-cur, 0px) - 1px);z-index:5;background:var(--bg-elev);
+    border-bottom:1px solid var(--border);}
+  details.loc.loc-pinned[open] > summary{background:color-mix(in srgb, var(--pin) 5%, var(--bg-elev));}
+  details.loc[open] > .items{padding-top:8px;}
+  /* "모으면 완료" 안내는 고정하지 않는다: 펼치면 제목 아래 본문 쪽 것을 보여준다 */
+  details.loc[open] > summary .loc-almost{display:none;}
+  details.loc > .loc-almost{margin:8px 10px 0;}
   details.loc summary{list-style:none;cursor:pointer;padding:11px 14px;}
   details.loc summary::-webkit-details-marker{display:none;}
   .loc-row{display:flex;align-items:center;justify-content:space-between;gap:8px 6px;flex-wrap:wrap;}
@@ -443,21 +453,21 @@
   var onlyIncomplete = false;
   var searchTerm = '';
   var searchQuery = null; // parseSearchQuery(searchTerm)의 결과 - {ast, colors, displayMode} 또는 null
-  // 카테고리 펼침 상태. 필터(검색/색상/미완료만)가 없을 땐 사용자가 직접 여닫은 값
-  // (openGroupIds)을 쓰고, 필터가 걸려 있는 동안은 "결과가 있는 카테고리를 자동으로
-  // 펼친" 임시 상태(filterOpenIds)를 쓴다. 임시 상태는 필터를 풀면 버려져서 원래
-  // 상태로 돌아가고, 필터를 새로 걸거나 바꿀 때(pendingFreshOpen)만 다시 계산한다 -
-  // 대기/데코를 수정하느라 다시 그릴 때마다 접어둔 카테고리가 펼쳐지지 않게 하기 위함.
+  // 카테고리 펼침 상태. 평소와 색상/미완료만 필터에서는 사용자가 직접 여닫은 값
+  // (openGroupIds)을 그대로 쓴다. 검색어가 있을 때만 "결과가 있는 카테고리를 자동으로
+  // 펼친" 임시 상태(filterOpenIds)를 쓰며, 검색어를 지우면 버려져 원래 상태로 돌아간다.
+  // 임시 상태는 검색어/필터/탭이 바뀔 때(pendingFreshOpen)만 다시 계산한다 - 대기/데코를
+  // 수정하느라 다시 그릴 때마다 접어둔 카테고리가 펼쳐지지 않게 하기 위함.
   var openGroupIds = {};
   var filterOpenIds = {};
   var pendingFreshOpen = false;
   function filterActive(){ return !!(searchTerm || onlyIncomplete || colorFilter); }
   function isGroupOpen(id){
-    if(filterActive() && (id in filterOpenIds)) return filterOpenIds[id];
+    if(searchTerm && (id in filterOpenIds)) return filterOpenIds[id];
     return !!openGroupIds[id];
   }
   function setGroupOpenState(id, open){
-    if(filterActive()) filterOpenIds[id] = open; else openGroupIds[id] = open;
+    if(searchTerm) filterOpenIds[id] = open; else openGroupIds[id] = open;
   }
   var editMode = false;
   var colorFilter = null;
@@ -1625,7 +1635,7 @@
     return '<details class="loc' + (complete?' loc-complete':'') + (goalComplete?' loc-goalmet':'') + (isPinned?' loc-pinned':'') + '" data-group-id="' + group.id + '" data-kind="' + kind + '"' + (isGroupOpen(group.id)?' open':'') + '>' +
       '<summary><div class="loc-row"><div class="loc-title">' + esc(group.name) + pinBadge + badge + rareBadge + '</div>' +
       '<div class="loc-meta">' + editGroupBtn + '<span class="loc-count">' + owned + '/' + total + '</span><span class="chev"></span></div>' +
-      '</div>' + groupHeadcountHtml(group, kind) + almost + '<div class="loc-progress"><div style="width:' + pct + '%"></div></div></summary>' +
+      '</div>' + groupHeadcountHtml(group, kind) + almost + '<div class="loc-progress"><div style="width:' + pct + '%"></div></div></summary>' + almost +
       '<div class="items">' + itemsHtml + '</div>' + addBtn + '</details>';
   }
 
@@ -1916,7 +1926,7 @@
     searchQuery = parseSearchQuery(searchTerm);
     var anyFilterActive = filterActive();
     var freshOpen = pendingFreshOpen; pendingFreshOpen = false;
-    if(!anyFilterActive || freshOpen) filterOpenIds = {};
+    if(!searchTerm || freshOpen) filterOpenIds = {};
     var matchedGroupCount = 0, filteredDeco = 0, filteredWait = 0;
     main.querySelectorAll('.item').forEach(function(el){
       var found = findItemAndList(el.getAttribute('data-item-id'));
@@ -1947,7 +1957,7 @@
       var locId = loc.getAttribute('data-group-id');
       if(anyFilterActive){
         loc.style.display = visible ? '' : 'none';
-        if(visible && freshOpen) filterOpenIds[locId] = true;
+        if(visible && freshOpen && searchTerm) filterOpenIds[locId] = true;
       } else {
         loc.style.display = '';
       }
@@ -2127,11 +2137,11 @@
         span.textContent = lGoalComplete ? '🏅' : '✅';
         locEl.querySelector('.loc-title').appendChild(span);
       }
-      var almostEl = locEl.querySelector('summary .loc-almost');
-      if(almostEl) almostEl.remove();
+      Array.prototype.forEach.call(locEl.querySelectorAll('.loc-almost'), function(el){ el.remove(); });
       if(loKind === 'loc' && gap.missing){
         var wrap = document.createElement('div');
         wrap.innerHTML = almostBannerHtml(gap.missing);
+        locEl.insertBefore(wrap.firstChild.cloneNode(true), locEl.querySelector('.items'));
         locEl.querySelector('summary').insertBefore(wrap.firstChild, locEl.querySelector('.loc-progress'));
       }
       // 일반 데코 완성/대기 마릿수 변화로 희귀 레벨 배지(잔여 포인트·예상 레벨)가
@@ -2241,7 +2251,20 @@
     if(!sum || e.defaultPrevented) return;
     var d = sum.parentNode;
     setGroupOpenState(d.getAttribute('data-group-id'), !d.open);
+    if(d.open) keepClosedCardInView(d);
   });
+  // 위에 고정된 제목을 눌러 접으면, 접힌 카드가 화면 밖에 남지 않게 그 위치로 맞춘다.
+  function keepClosedCardInView(card){
+    var hdrEl = document.querySelector('header');
+    if(card.getBoundingClientRect().top >= hdrEl.offsetHeight - 2) return; // 제목이 고정된 상태가 아님
+    ignoreScrollUntil = Date.now() + 400; // 이 자동 이동으로 상단이 접히거나 펴지지 않게
+    setTimeout(function(){
+      var docTop = card.getBoundingClientRect().top + window.scrollY;
+      var target = docTop - hdrEl.offsetHeight - 10;
+      if(compactQuery.matches && target <= hdrFullH - 100){ setCompact(false); target = docTop - hdrFullH - 10; }
+      window.scrollTo(0, Math.max(0, target));
+    }, 0);
+  }
   document.getElementById('main').addEventListener('toggle', syncExpandBtn, true);
 
   document.getElementById('exportBtn').addEventListener('click', function(){
@@ -2347,8 +2370,10 @@
   // 같은 방향으로 20px 넘게 움직여야 반응하고, iOS 바운스 구간은 잘라낸다.
   var hdr = document.querySelector('header');
   var compactQuery = window.matchMedia('(max-width:699px), (max-height:500px)');
-  var hdrFullH = 0, hdrSettleUntil = 0, lastScrollY = 0, scrollRun = 0;
+  var hdrFullH = 0, hdrSettleUntil = 0, lastScrollY = 0, scrollRun = 0, ignoreScrollUntil = 0;
   function syncHdrHeight(){
+    // 고정된 카테고리 제목이 붙는 위치 - 접히는 중에도 계속 따라간다
+    document.documentElement.style.setProperty('--hdr-cur', hdr.offsetHeight + 'px');
     // 접혀 있거나 펼치는 중일 때의 높이는 기록하지 않는다(목록 위치가 흔들림)
     if(hdr.classList.contains('compact') || Date.now() < hdrSettleUntil) return;
     hdrFullH = hdr.offsetHeight;
@@ -2364,6 +2389,7 @@
     var y = Math.min(Math.max(window.scrollY, 0), max);
     var delta = y - lastScrollY;
     lastScrollY = y;
+    if(Date.now() < ignoreScrollUntil){ scrollRun = 0; return; }
     // 맨 위 근처에서는 항상 펼친다(접으면 헤더와 목록 사이에 빈틈이 생김)
     if(!compactQuery.matches || y <= hdrFullH - 100){ scrollRun = 0; setCompact(false); return; }
     if(delta === 0) return;
@@ -2372,7 +2398,7 @@
     if(scrollRun > 20 && document.activeElement !== document.getElementById('search')) setCompact(true);
     else if(scrollRun < -20) setCompact(false);
   }
-  new ResizeObserver(syncHdrHeight).observe(hdr);
+  new ResizeObserver(syncHdrHeight).observe(hdr, {box:'border-box'});
   window.addEventListener('scroll', onScroll, {passive:true});
   compactQuery.addEventListener('change', function(){ setCompact(false); syncHdrHeight(); });
 
