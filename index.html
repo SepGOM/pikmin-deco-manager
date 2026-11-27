@@ -1227,7 +1227,8 @@
     });
     var missingList = missingOrder.map(function(k){ return missingMap[k]; });
     var remaining = total - owned;
-    var withinThreshold = remaining > 0 && remaining <= ALMOST_THRESHOLD;
+    // 아무것도 안 모은 카테고리(종류가 적은 비/눈 오는 날 등)에는 안내를 띄우지 않는다
+    var withinThreshold = owned > 0 && remaining > 0 && remaining <= ALMOST_THRESHOLD;
     return {owned:owned, total:total, remaining:remaining, missing: withinThreshold ? missingList : null};
   }
   function almostBannerHtml(missingList){
@@ -2337,7 +2338,9 @@
   document.getElementById('resetBtn').addEventListener('click', function(){
     if(!confirm('모든 수집 기록을 초기화할까요? (아이템/색상 구성은 유지됩니다. 직후에 "되돌리기"로 취소할 수 있어요)')) return;
     state = {};
+    waitState = {};
     saveState();
+    saveWaitState();
     render();
   });
 
