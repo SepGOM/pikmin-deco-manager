@@ -41,24 +41,24 @@
   .statrow.goal .pct{color:var(--met);}
   .totalPikminRow{font-size:11.5px;color:var(--text-dim);margin:2px 0 4px;}
   .totalPikminRow b{color:var(--text);font-weight:700;}
-  .colorsummary{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 4px;margin-bottom:2px;-webkit-overflow-scrolling:touch;}
+  .colorsummary{display:flex;gap:4px;overflow-x:auto;padding:8px 2px 4px;margin-bottom:2px;-webkit-overflow-scrolling:touch;}
   .colorsummary::-webkit-scrollbar{display:none;}
-  .cs-pill{flex:0 0 auto;border:1px solid var(--border);background:var(--bg-elev);border-radius:11px;
-    padding:6px 9px;text-align:center;min-width:64px;position:relative;cursor:pointer;}
-  .cs-pill.active{border-color:var(--accent);border-width:2px;padding:5px 8px;background:var(--accent-dim);}
+  .cs-pill{flex:1 0 38px;border:1px solid var(--border);background:var(--bg-elev);border-radius:11px;
+    padding:6px 2px;text-align:center;min-width:0;position:relative;cursor:pointer;}
+  .cs-pill.active{border-color:var(--accent);border-width:2px;padding:5px 1px;background:var(--accent-dim);}
   .cs-pill .sw{width:14px;height:14px;border-radius:50%;margin:0 auto 3px;}
   .cs-pill .n{font-size:13px;font-weight:700;}
-  .cs-pill .k{font-size:9.5px;color:var(--text-dim);}
-  .cs-pill .g{font-size:9px;color:var(--met);font-weight:700;margin-top:1px;}
-  .cs-pill .dw{font-size:9px;color:var(--pin);font-weight:700;margin-top:1px;}
+  .cs-pill .k{font-size:9.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;max-height:14px;
+    transition:max-height .2s,opacity .2s;}
   .cs-pill .csDel{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;
     background:var(--danger);color:#fff;font-size:10px;line-height:16px;border:none;padding:0;}
   .cs-addpill{flex:0 0 auto;border:1px dashed var(--border);background:transparent;color:var(--text-dim);
     border-radius:11px;padding:6px 12px;font-size:18px;min-width:44px;}
-  .tabs{display:flex;gap:6px;margin:8px 0;}
-  .tab-btn{flex:1;padding:8px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg-elev);
-    color:var(--text-dim);font-size:13.5px;font-weight:600;}
-  .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tabs{display:flex;gap:2px;margin:6px 0;padding:2px;border-radius:9px;border:1px solid var(--border);
+    background:var(--bg-elev);}
+  .tab-btn{transition:height .2s;flex:1;height:26px;padding:0;border-radius:7px;border:none;background:transparent;
+    color:var(--text-dim);font-size:12.5px;font-weight:600;}
+  .tab-btn.active{background:var(--accent);color:#fff;}
   .tabStats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:11.5px;
     color:var(--text-dim);background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;
     padding:6px 10px;margin-bottom:8px;}
@@ -67,29 +67,71 @@
   .tabStats .ts-wait{color:color-mix(in srgb, var(--met) 80%, var(--text-dim));font-weight:700;}
   .searchResultInfo{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;}
   .dashboard{padding:4px 0 20px;grid-column:1/-1;}
-  .dash-tablewrap{overflow-x:auto;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;}
-  .dash-table{border-collapse:collapse;width:100%;font-size:11.5px;white-space:nowrap;}
-  .dash-table th, .dash-table td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);}
-  .dash-table th:first-child, .dash-table td:first-child{text-align:left;position:sticky;left:0;
-    background:var(--bg-elev);}
-  .dash-table thead th{background:var(--bg-elev);font-weight:700;color:var(--text-dim);}
-  .dash-sect td{background:color-mix(in srgb, var(--accent) 12%, var(--bg-elev));font-weight:700;
-    color:var(--text);position:static;}
-  .dash-label{color:var(--text-dim);}
-  .dash-sum{font-weight:700;color:var(--text);}
-  .dash-section-title{font-size:13px;font-weight:700;margin:14px 2px 6px;}
-  .dash-listwrap{overflow-x:auto;margin-bottom:10px;border:1px solid var(--border);border-radius:10px;}
+  /* 접을 수 있는 헤더 구역(제목 / 진행바 / 탭 통계+검색) */
+  .fold{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:1fr;
+    transition:grid-template-rows .2s,opacity .2s,visibility .2s;}
+  .fold > div{overflow:hidden;min-height:0;}
+  /* 넓은 화면: 왼쪽 진행바, 오른쪽 색 버튼 한 줄 */
+  @media (min-width:820px){
+    .overview{display:flex;align-items:center;gap:16px;}
+    .overview > .fold{flex:1;}
+    .overview > .colorsummary{flex:0 1 auto;}
+    .cs-pill{flex:0 0 auto;min-width:48px;}
+  }
+  /* 휴대폰(세로/가로): 헤더를 고정 위치로 띄워, 접고 펼 때 목록이 밀리지 않게 한다 */
+  @media (max-width:699px), (max-height:500px){
+    header{position:fixed;left:0;right:0;}
+    body{padding-top:var(--hdr-h,0px);}
+    header.compact{padding-top:calc(4px + env(safe-area-inset-top));padding-bottom:8px;}
+    header.compact .fold{grid-template-rows:0fr;opacity:0;visibility:hidden;}
+    header.compact .overview{display:block;}
+    header.compact .colorsummary{padding:6px 2px 2px;}
+    header.compact .cs-pill .k{max-height:0;opacity:0;}
+    header.compact .tabs{margin:4px 0 0;}
+    header.compact .tab-btn{height:22px;font-size:12px;}
+  }
+  .dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:18px;align-items:start;}
+  @media (min-width:900px){ .dash-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (min-width:1800px){ .dash-grid{grid-template-columns:repeat(4,minmax(0,1fr));} }
+  .dash-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-elev);}
+  .dash-card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 12px;font-size:13px;
+    background:color-mix(in srgb, var(--accent) 16%, var(--bg-elev));border-bottom:1px solid var(--border);}
+  .dash-card-head span{font-size:12px;color:var(--text-dim);}
+  .dash-card-head span b{color:var(--text);}
+  .dash-note{font-size:10.5px;font-weight:500;color:var(--text-dim);margin-left:5px;}
+  .dash-table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
+  .dash-table th, .dash-table td{padding:3px 10px;text-align:right;border-bottom:1px solid var(--border);}
+  .dash-table th:first-child, .dash-table td:first-child{text-align:left;}
+  .dash-table thead th{font-weight:700;color:var(--text-dim);}
+  .dash-table td.dash-own{font-weight:700;}
+  .dash-table td.dash-left{color:var(--met);}
+  .dash-table td.dash-hi{font-weight:800;color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, transparent);}
+  .dash-table td.dash-lo{font-weight:800;color:var(--danger);background:color-mix(in srgb, var(--danger) 12%, transparent);}
+  .dash-table .dash-card-sum td{font-weight:800;background:color-mix(in srgb, var(--text) 10%, var(--bg-elev));}
+  .dash-table tr:last-child td{border-bottom:none;}
+  /* 미완성 카테고리: 위치/스페셜 표 두 개를 타일로 놓는다 */
+  .dash-lists{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:10px;align-items:start;}
+  @media (min-width:900px){ .dash-lists{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .dash-listwrap{overflow-x:auto;}
+  .dash-lists-title{font-size:15px;margin:0 0 10px;padding:16px 2px 0;
+    border-top:2px solid color-mix(in srgb, var(--text) 18%, var(--bg));}
   .dash-list{border-collapse:collapse;width:100%;font-size:12px;}
   .dash-list th, .dash-list td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;
     white-space:nowrap;}
-  .dash-empty{font-size:12px;color:var(--text-dim);padding:4px 2px 14px;}
+  .dash-list tbody tr:last-child td{border-bottom:none;}
+  .dash-empty{font-size:12px;color:var(--text-dim);padding:10px 12px;}
   .dash-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;
     border:1px solid rgba(0,0,0,.15);vertical-align:middle;flex-shrink:0;}
-  .dash-table thead th{white-space:nowrap;}
-  .dash-table td.dash-hi{font-weight:800;color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, transparent);}
-  .dash-table td.dash-lo{font-weight:800;color:var(--danger);background:color-mix(in srgb, var(--danger) 12%, transparent);}
   .dash-dots{display:flex;flex-wrap:nowrap;gap:3px;align-items:center;}
   .dash-cat{vertical-align:top;font-weight:700;color:var(--text);white-space:nowrap;}
+  .dashSel[hidden]{display:none;}
+  @media (min-width:640px){ .dashSel{display:none;} }
+  @media (max-width:639px){
+    .dash-grid .dash-card:not(.sel){display:none;}
+    .dash-card-head{padding:8px 10px;}
+    .dash-table th, .dash-table td{padding:7px 8px;}
+    .dash-list th, .dash-list td{white-space:normal;word-break:keep-all;}
+  }
   .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .search{flex:1;min-width:110px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
     background:var(--bg-elev);color:var(--text);font-size:14px;}
@@ -243,10 +285,14 @@
 <body>
 
 <header>
+  <div class="fold"><div>
   <h1>
     <span class="title"><span class="emoji">🌺</span>피크민 데코 컬렉션</span>
     <button id="editToggle">✏️ 편집</button>
   </h1>
+  </div></div>
+  <div class="overview">
+  <div class="fold"><div>
   <div class="statrow">
     <span class="label">종류 보유</span>
     <div class="progress"><div id="existBar" style="width:0%"></div></div>
@@ -258,12 +304,21 @@
     <span class="pct" id="goalPct">0/0</span>
   </div>
   <div class="totalPikminRow" id="totalPikminRow">총 보유 피크민 <b id="totalPikminText">0마리</b></div>
+  </div></div>
   <div class="colorsummary" id="colorSummary"></div>
+  </div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="loc" id="tabLoc">위치별</button>
     <button class="tab-btn" data-tab="special" id="tabSpecial">스페셜</button>
     <button class="tab-btn" data-tab="dashboard" id="tabDashboard">현황판</button>
   </div>
+  <div class="tabs dashSel" id="dashSel" hidden>
+    <button class="tab-btn active" data-sect="all">전체</button>
+    <button class="tab-btn" data-sect="loc">위치</button>
+    <button class="tab-btn" data-sect="rare">희귀</button>
+    <button class="tab-btn" data-sect="spec">스페셜</button>
+  </div>
+  <div class="fold"><div>
   <div class="tabStats" id="tabStats"></div>
   <div class="toolbar" id="toolbarRow">
     <input class="search" id="search" type="search" placeholder="검색… (예: 빨강&클로버, !데코)">
@@ -271,6 +326,7 @@
     <button class="icon-btn" id="expandBtn">모두 펼치기</button>
   </div>
   <div class="searchResultInfo" id="searchResultInfo" style="display:none;"></div>
+  </div></div>
 </header>
 
 <main id="main"></main>
@@ -1194,8 +1250,7 @@
         var c = cb.color;
         if(!map[c]) map[c] = {heads:0, deco:0, wait:0, met:0, total:0};
         var n = getCount(cb.key);
-        // 큰 숫자(heads)는 데코+대기를 합친 "총 보유", 작은 초록 글씨(met/total)는
-        // 순수 데코 진행도, 맨 아래 줄(deco/wait)은 데코·대기 마릿수를 각각 보여준다.
+        // 색 버튼에는 heads(데코+대기)만 표시한다.
         map[c].deco += n;
         map[c].met += Math.min(n, 1);
         map[c].total += 1;
@@ -1287,44 +1342,20 @@
     return out;
   }
   function pctStr(n, d){ return d ? (Math.round(n/d*1000)/10) + '%' : '0%'; }
-  function dashNumRow(label, arr){
-    var cells = arr.map(function(v){ return '<td>' + v + '</td>'; }).join('');
-    var sum = arr.reduce(function(a,b){ return a+b; }, 0);
-    return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + sum + '</td></tr>';
-  }
-  function dashPctRow(label, metArr, totalArr){
+  function pctMarks(metArr, totalArr){
     // 표시되는 값(소수 첫째 자리)을 기준으로 최고/최저를 잡아야 같은 값이 한쪽만 강조되지 않는다.
     // 종류가 0개인 색은 비교에서 뺀다. 비교 대상이 2개 미만이거나 전부 같으면 강조하지 않는다.
     var vals = metArr.map(function(m,i){ return totalArr[i] ? Math.round(m/totalArr[i]*1000) : null; });
     var valid = vals.filter(function(v){ return v !== null; });
     var hi = Math.max.apply(null, valid), lo = Math.min.apply(null, valid);
     var mark = valid.length >= 2 && hi !== lo;
-    var cells = metArr.map(function(m,i){
-      var cls = !mark || vals[i] === null ? '' : vals[i] === hi ? ' class="dash-hi"' : vals[i] === lo ? ' class="dash-lo"' : '';
-      return '<td' + cls + '>' + pctStr(m, totalArr[i]) + '</td>';
-    }).join('');
-    var sumM = metArr.reduce(function(a,b){ return a+b; }, 0);
-    var sumT = totalArr.reduce(function(a,b){ return a+b; }, 0);
-    return '<tr><td class="dash-label">' + esc(label) + '</td>' + cells + '<td class="dash-sum">' + pctStr(sumM,sumT) + '</td></tr>';
+    return vals.map(function(v){
+      return !mark || v === null ? '' : v === hi ? 'dash-hi' : v === lo ? 'dash-lo' : '';
+    });
   }
-  function dashboardSection(title, map, opts){
-    opts = opts || {};
-    var keys = CATALOG.colors.map(function(c){ return c.key; });
-    var deco = keys.map(function(k){ return (map[k]||{}).deco||0; });
-    var wait = keys.map(function(k){ return (map[k]||{}).wait||0; });
-    var met = keys.map(function(k){ return (map[k]||{}).met||0; });
-    var total = keys.map(function(k){ return (map[k]||{}).total||0; });
-    var head = deco.map(function(d,i){ return d+wait[i]; });
-    var rows = '<tr class="dash-sect"><td colspan="' + (keys.length+2) + '">' + esc(title) + '</td></tr>';
-    rows += dashNumRow('데코 피크민', deco);
-    if(opts.showWait) rows += dashNumRow('일반 피크민(대기)', wait);
-    rows += dashNumRow('활성화 종류 수', met);
-    rows += dashNumRow('현존 종류 수', total);
-    rows += dashPctRow('데코 진행도', met, total);
-    // 대기가 없는 구간(희귀 등)은 "총 피크민"이 "데코 피크민"과 완전히 같은
-    // 숫자라 굳이 또 한 줄 보여줄 필요가 없다 - opts.skipTotalRow로 생략.
-    if(!opts.skipTotalRow) rows += dashNumRow(opts.totalLabel || '총 피크민', head);
-    return rows;
+  // 구역 제목: 보조 설명은 괄호 대신 작은 회색 글씨로 붙인다.
+  function sectTitleHtml(title, note){
+    return esc(title) + (note ? '<small class="dash-note">' + esc(note) + '</small>' : '');
   }
   // 색상 이름을 그냥 텍스트로 나열하면 밋밋하니, 실제 색상의 작은 알(원)로 보여준다.
   function colorDotHtml(color){
@@ -1339,56 +1370,71 @@
     itemCombos(item).forEach(function(cb){ if(getCount(cb.key) < 1) missing[cb.color] = true; });
     return Object.keys(missing);
   }
-  // 카테고리별로 "아직 완료 안 된 종류"를 하나하나 짚어서(카테고리는 rowspan으로
-  // 한 번만) 그 종류에 부족한 색상을 알로 보여준다 - 카테고리 단위로 뭉뚱그리지
-  // 않고 어떤 종류가 문제인지 바로 알 수 있게.
-  function dashboardIncompleteRows(groups){
-    var rows = '';
-    groups.forEach(function(g){
+  // 카테고리별로 "아직 완료 안 된 종류"를 모은다 - 카테고리 단위로 뭉뚱그리지 않고
+  // 어떤 종류의 어떤 색이 부족한지 바로 알 수 있게.
+  function incompleteGroups(groups){
+    return groups.map(function(g){
       var gap = groupClearGap(g);
-      if(!(gap.total>0 && gap.owned<gap.total)) return;
-      var incompleteItems = g.items.filter(function(it){
-        return !it.optional && itemMissingColors(it).length > 0;
-      });
-      if(!incompleteItems.length) return;
-      incompleteItems.forEach(function(it, idx){
-        rows += '<tr>' +
-          (idx===0 ? '<td class="dash-cat" rowspan="' + incompleteItems.length + '">' + esc(g.name) + '</td>' : '') +
-          '<td>' + esc(it.name) + '</td>' +
-          '<td><span class="dash-dots">' + itemMissingColors(it).map(colorDotHtml).join('') + '</span></td>' +
-          '</tr>';
-      });
-    });
-    return rows;
+      if(!(gap.total>0 && gap.owned<gap.total)) return null;
+      var items = g.items.filter(function(it){ return !it.optional && itemMissingColors(it).length > 0; });
+      return items.length ? {name:g.name, items:items} : null;
+    }).filter(Boolean);
+  }
+  function dashboardIncompleteCard(title, groups){
+    // 카테고리명은 rowspan으로 한 번만 보여준다
+    var rows = incompleteGroups(groups).map(function(g){
+      return g.items.map(function(it, idx){
+        return '<tr>' + (idx===0 ? '<td class="dash-cat" rowspan="' + g.items.length + '">' + esc(g.name) + '</td>' : '') +
+          '<td>' + esc(it.name) + '</td><td><span class="dash-dots">' + itemMissingColors(it).map(colorDotHtml).join('') + '</span></td></tr>';
+      }).join('');
+    }).join('');
+    var body = rows ? '<div class="dash-listwrap"><table class="dash-list"><thead><tr><th>카테고리</th><th>종류</th><th>부족 색상</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div>' : '<div class="dash-empty">미완성 카테고리 없음 🎉</div>';
+    return '<div class="dash-card"><div class="dash-card-head"><b>' + esc(title) + '</b></div>' + body + '</div>';
   }
   function dashboardIncompleteHtml(){
-    var locRows = dashboardIncompleteRows(CATALOG.locations);
-    var specRows = dashboardIncompleteRows(CATALOG.specialGroups);
-    var tableShell = function(rows){
-      // 줄바꿈이 생기면 rowspan 셀과 옆 행 높이가 어긋나 보이니, 표는 한 줄
-      // 고정(nowrap)으로 두고 좁은 화면에서는 가로 스크롤로 본다.
-      return rows ? '<div class="dash-listwrap"><table class="dash-list"><thead><tr><th>카테고리</th><th>종류</th><th>부족 색상</th></tr></thead><tbody>' +
-        rows + '</tbody></table></div>' : '<div class="dash-empty">미완성 카테고리 없음 🎉</div>';
+    return '<h2 class="dash-lists-title">미완성 카테고리</h2>' +
+      '<div class="dash-lists">' + dashboardIncompleteCard('위치', CATALOG.locations) +
+      dashboardIncompleteCard('스페셜', CATALOG.specialGroups) + '</div>';
+  }
+  // 구역별 타일: 색을 행, 항목을 열로 놓아 옆으로 넘기지 않고 본다. 넓은 화면은 네
+  // 타일을 격자로, 좁은 화면은 선택한 구역(dashSection) 하나만 보여준다.
+  var dashSection = 'all';
+  function dashboardCard(sect){
+    var map = sect.map, showWait = sect.showWait;
+    var keys = CATALOG.colors.map(function(c){ return c.key; });
+    var pick = function(f){ return keys.map(function(k){ return (map[k]||{})[f]||0; }); };
+    var deco = pick('deco'), wait = pick('wait'), met = pick('met'), total = pick('total');
+    var sum = function(arr){ return arr.reduce(function(a,b){ return a+b; }, 0); };
+    var marks = pctMarks(met, total);
+    var row = function(label, d, w, m, t, cls, rowCls){
+      return '<tr' + (rowCls ? ' class="' + rowCls + '"' : '') + '><td>' + label + '</td><td>' + d + '</td>' +
+        (showWait ? '<td>' + w + '</td>' : '') + '<td class="dash-own">' + m + '</td><td class="dash-left">' + (t-m) + '</td>' +
+        '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + pctStr(m,t) + '</td></tr>';
     };
-    return '<div class="dash-section-title">미완성 카테고리 - 위치</div>' + tableShell(locRows) +
-      '<div class="dash-section-title">미완성 카테고리 - 스페셜</div>' + tableShell(specRows);
+    var rows = keys.map(function(k,i){
+      return row(colorDotHtml(k) + esc(k), deco[i], wait[i], met[i], total[i], marks[i]);
+    }).join('') + row('합', sum(deco), sum(wait), sum(met), sum(total), '', 'dash-card-sum');
+    var heads = '<span>총 <b>' + (sum(deco)+sum(wait)) + '</b>마리</span>';
+    return '<div class="dash-card' + (sect.id === dashSection ? ' sel' : '') + '"><div class="dash-card-head"><b>' + sectTitleHtml(sect.title, sect.note) + '</b>' + heads + '</div>' +
+      '<table class="dash-table"><thead><tr><th>색</th><th>데코</th>' + (showWait ? '<th>대기</th>' : '') +
+      '<th>보유</th><th>남음</th><th>진행도</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
   function dashboardHtml(){
     var locMap = colorScopeTotals(allLocItems(), true);
     var rareMap = colorScopeTotals(locRareItems(), false);
     var specMap = colorScopeTotals(specialAllItems(), false);
-    // 전체 합계는 위치(이미 희귀 포함)+이벤트만 더한다 - 희귀 참고 섹션을 또
+    // 전체 합계는 위치(이미 희귀 포함)+스페셜만 더한다 - 희귀 참고 타일을 또
     // 더하면 희귀가 두 번 잡히니 여기엔 안 넣는다.
     var allMap = mergeColorMaps([locMap, specMap]);
-    var head = '<tr><th class="dash-label">구분</th>' + CATALOG.colors.map(function(c){
-      return '<th>' + colorDotHtml(c.key) + esc(c.key) + '</th>';
-    }).join('') + '<th>합</th></tr>';
-    var body = dashboardSection('위치 (희귀 포함)', locMap, {showWait:true, totalLabel:'위치 총 피크민'}) +
-      dashboardSection('위치(희귀)', rareMap, {showWait:false, skipTotalRow:true}) +
-      dashboardSection('이벤트 (스페셜)', specMap, {showWait:false, totalLabel:'이벤트 총 피크민'}) +
-      dashboardSection('전체 합계', allMap, {showWait:true, totalLabel:'전체 보유 피크민'});
-    var tableHtml = '<div class="dash-tablewrap"><table class="dash-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
-    return '<div class="dashboard">' + tableHtml + dashboardIncompleteHtml() + '</div>';
+    var sections = [
+      {id:'all', title:'전체 합계', map:allMap, showWait:true},
+      {id:'loc', title:'위치', note:'희귀 포함', map:locMap, showWait:true},
+      {id:'rare', title:'위치', note:'희귀', map:rareMap, showWait:false},
+      {id:'spec', title:'스페셜', map:specMap, showWait:false}
+    ];
+    return '<div class="dashboard"><div class="dash-grid">' + sections.map(dashboardCard).join('') + '</div>' +
+      dashboardIncompleteHtml() + '</div>';
   }
 
   function updateHeader(){
@@ -1418,8 +1464,6 @@
         '<div class="sw" style="background:' + c.hex + '"></div>' +
         '<div class="n">' + s.heads + '</div>' +
         '<div class="k">' + esc(c.key) + '</div>' +
-        '<div class="g">' + s.met + '/' + s.total + '</div>' +
-        '<div class="dw">' + s.deco + '/' + s.wait + '</div>' +
         '</div>';
     }).join('') + (editMode ? '<button class="cs-addpill" id="addColorBtn">+</button>' : '');
     document.getElementById('colorSummary').innerHTML = html;
@@ -1559,6 +1603,7 @@
     document.getElementById('toolbarRow').style.display = curTab === 'dashboard' ? 'none' : '';
     document.getElementById('tabStats').style.display = curTab === 'dashboard' ? 'none' : '';
     document.getElementById('searchResultInfo').style.display = curTab === 'dashboard' ? 'none' : (document.getElementById('searchResultInfo').style.display);
+    document.getElementById('dashSel').hidden = curTab !== 'dashboard';
     if(curTab === 'dashboard'){
       main.innerHTML = dashboardHtml();
       updateHeader();
@@ -2123,6 +2168,14 @@
   document.getElementById('tabLoc').addEventListener('click', function(){ switchTab('loc', this); });
   document.getElementById('tabSpecial').addEventListener('click', function(){ switchTab('special', this); });
   document.getElementById('tabDashboard').addEventListener('click', function(){ switchTab('dashboard', this); });
+  Array.prototype.forEach.call(document.querySelectorAll('#dashSel .tab-btn'), function(btn){
+    btn.addEventListener('click', function(){
+      dashSection = btn.getAttribute('data-sect');
+      Array.prototype.forEach.call(btn.parentNode.children, function(b){ b.classList.toggle('active', b === btn); });
+      render();
+      window.scrollTo(0, 0);
+    });
+  });
   document.getElementById('search').addEventListener('input', function(){
     // 대소문자는 매칭 시 내부에서 처리하고, 연산자(&;!()=)는 원문 그대로 유지해야
     // 하니 여기서는 앞뒤 공백만 정리한다.
@@ -2252,6 +2305,40 @@
   }
   document.getElementById('undoBtn').addEventListener('click', undoLast);
   lastSnap = snapshotAll();
+
+  // ---------- 스크롤에 따라 접히는 헤더(휴대폰) ----------
+  // 위로 밀면(아래 내용 보기) 접고, 아래로 쓸면 바로 펼친다. 흔들림에 깜빡이지 않게
+  // 같은 방향으로 20px 넘게 움직여야 반응하고, iOS 바운스 구간은 잘라낸다.
+  var hdr = document.querySelector('header');
+  var compactQuery = window.matchMedia('(max-width:699px), (max-height:500px)');
+  var hdrFullH = 0, hdrSettleUntil = 0, lastScrollY = 0, scrollRun = 0;
+  function syncHdrHeight(){
+    // 접혀 있거나 펼치는 중일 때의 높이는 기록하지 않는다(목록 위치가 흔들림)
+    if(hdr.classList.contains('compact') || Date.now() < hdrSettleUntil) return;
+    hdrFullH = hdr.offsetHeight;
+    document.documentElement.style.setProperty('--hdr-h', hdrFullH + 'px');
+  }
+  function setCompact(on){
+    if(hdr.classList.contains('compact') === on) return;
+    if(!on){ hdrSettleUntil = Date.now() + 250; setTimeout(syncHdrHeight, 270); }
+    hdr.classList.toggle('compact', on);
+  }
+  function onScroll(){
+    var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    var y = Math.min(Math.max(window.scrollY, 0), max);
+    var delta = y - lastScrollY;
+    lastScrollY = y;
+    // 맨 위 근처에서는 항상 펼친다(접으면 헤더와 목록 사이에 빈틈이 생김)
+    if(!compactQuery.matches || y <= hdrFullH - 100){ scrollRun = 0; setCompact(false); return; }
+    if(delta === 0) return;
+    if((delta > 0) !== (scrollRun > 0)) scrollRun = 0;
+    scrollRun += delta;
+    if(scrollRun > 20 && document.activeElement !== document.getElementById('search')) setCompact(true);
+    else if(scrollRun < -20) setCompact(false);
+  }
+  new ResizeObserver(syncHdrHeight).observe(hdr);
+  window.addEventListener('scroll', onScroll, {passive:true});
+  compactQuery.addEventListener('change', function(){ setCompact(false); syncHdrHeight(); });
 
   render();
 })();
