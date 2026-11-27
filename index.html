@@ -13,7 +13,7 @@
     --radius:14px; --modal-bg:#ffffff; --overlay:rgba(20,18,12,.45);
     color-scheme:light;
   }
-  /* 화면 모드는 시스템 설정과 상관없이 상단의 버튼으로만 바꾼다 */
+  /* 화면 모드는 상단 버튼으로 고른다(라이트 / 다크 / 자동=기기 설정 따라감) */
   :root[data-theme="dark"]{
     --bg:#1b1a17; --bg-elev:#252420; --text:#efece3; --text-dim:#a39c8c;
     --border:#3a372f; --accent:#4cbf76; --accent-dim:#1f3a2a; --met:#e0b64a; --pin:#5b9dff;
@@ -336,7 +336,7 @@
   .modal .actions button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
   .modal .actions button.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
 </style>
-<script id="theme-boot">try{if(localStorage.getItem('pikminDecoTheme_v1')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<script id="theme-boot">try{var m=localStorage.getItem('pikminDecoTheme_v1');if(m==='dark'||(m==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 </head>
 <body>
 
@@ -2359,27 +2359,36 @@
     });
   }
 
-  // 화면 모드(라이트/다크): 기기에 저장하며 기본은 라이트. 처음 적용은 head의 theme-boot가 한다.
+  // 화면 모드: 라이트 → 다크 → 자동(A, 기기 설정 따라감) 순으로 바뀌며 기기에 저장한다.
+  // 기본은 라이트. 처음 적용은 head의 theme-boot가 한다.
   var THEME_KEY = 'pikminDecoTheme_v1';
   var themeBtn = document.getElementById('themeToggle');
-  function isDarkTheme(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
+  var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  var themeMode = 'light';
+  try { var savedTheme = localStorage.getItem(THEME_KEY); if(savedTheme === 'dark' || savedTheme === 'auto') themeMode = savedTheme; } catch(e){}
   var MOON_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
   var SUN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/>' +
     '<path d="M12 2v2M12 20v2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2 12h2M20 12h2M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5"/></svg>';
-  function syncThemeBtn(){
-    var label = isDarkTheme() ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기';
-    themeBtn.innerHTML = isDarkTheme() ? SUN_ICON : MOON_ICON;
-    themeBtn.title = label;
-    themeBtn.setAttribute('aria-label', label);
-  }
-  themeBtn.addEventListener('click', function(){
-    var dark = !isDarkTheme();
+  var AUTO_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 19.5 12 4.5l6.5 15M8.2 14h7.6"/></svg>';
+  var THEME_NEXT = {light:'dark', dark:'auto', auto:'light'};
+  var THEME_LABEL = {light:'다크 모드로 바꾸기', dark:'자동 모드(기기 설정)로 바꾸기', auto:'자동 모드 사용 중 · 라이트 모드로 바꾸기'};
+  function applyTheme(){
+    var dark = themeMode === 'dark' || (themeMode === 'auto' && darkQuery.matches);
     if(dark) document.documentElement.setAttribute('data-theme', 'dark');
     else document.documentElement.removeAttribute('data-theme');
-    try { localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light'); } catch(e){}
-    syncThemeBtn();
+    themeBtn.innerHTML = themeMode === 'auto' ? AUTO_ICON : themeMode === 'dark' ? SUN_ICON : MOON_ICON;
+    themeBtn.title = THEME_LABEL[themeMode];
+    themeBtn.setAttribute('aria-label', THEME_LABEL[themeMode]);
+  }
+  themeBtn.addEventListener('click', function(){
+    themeMode = THEME_NEXT[themeMode];
+    try { localStorage.setItem(THEME_KEY, themeMode); } catch(e){}
+    applyTheme();
   });
-  syncThemeBtn();
+  // 자동 모드에서는 기기 설정이 바뀌면 바로 따라간다
+  if(darkQuery.addEventListener) darkQuery.addEventListener('change', applyTheme);
+  else darkQuery.addListener(applyTheme);
+  applyTheme();
 
   document.getElementById('editToggle').addEventListener('click', function(){
     editMode = !editMode;
