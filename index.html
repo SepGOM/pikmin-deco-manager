@@ -11,14 +11,15 @@
     --chip-off:#efece3; --chip-off-border:#d8d2c2;
     --danger:#c0392b; --shadow:0 1px 3px rgba(0,0,0,.08);
     --radius:14px; --modal-bg:#ffffff; --overlay:rgba(20,18,12,.45);
+    color-scheme:light;
   }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#1b1a17; --bg-elev:#252420; --text:#efece3; --text-dim:#a39c8c;
-      --border:#3a372f; --accent:#4cbf76; --accent-dim:#1f3a2a; --met:#e0b64a; --pin:#5b9dff;
-      --chip-off:#2c2a24; --chip-off-border:#413d33;
-      --shadow:0 1px 3px rgba(0,0,0,.4); --modal-bg:#252420; --overlay:rgba(0,0,0,.6);
-    }
+  /* 화면 모드는 시스템 설정과 상관없이 상단의 버튼으로만 바꾼다 */
+  :root[data-theme="dark"]{
+    --bg:#1b1a17; --bg-elev:#252420; --text:#efece3; --text-dim:#a39c8c;
+    --border:#3a372f; --accent:#4cbf76; --accent-dim:#1f3a2a; --met:#e0b64a; --pin:#5b9dff;
+    --chip-off:#2c2a24; --chip-off-border:#413d33;
+    --shadow:0 1px 3px rgba(0,0,0,.4); --modal-bg:#252420; --overlay:rgba(0,0,0,.6);
+    color-scheme:dark;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
@@ -33,8 +34,13 @@
   h1{font-size:19px;margin:0 0 8px;display:flex;align-items:center;gap:8px;justify-content:space-between;}
   h1 .title{display:flex;align-items:center;gap:8px;}
   h1 .emoji{font-size:22px;}
+  .head-btns{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   #editToggle{border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);
     border-radius:9px;padding:5px 9px;font-size:12px;font-weight:600;}
+  #themeToggle{width:32px;height:32px;flex-shrink:0;padding:0;border-radius:50%;border:1px solid var(--border);
+    background:var(--bg-elev);color:var(--text-dim);display:flex;align-items:center;justify-content:center;}
+  #themeToggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;
+    stroke-linejoin:round;}
   #editToggle.on{background:var(--met);border-color:var(--met);color:#fff;}
   .statrow{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
   .statrow .label{font-size:11.5px;color:var(--text-dim);white-space:nowrap;min-width:76px;}
@@ -331,6 +337,7 @@
   .modal .actions button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
   .modal .actions button.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
 </style>
+<script id="theme-boot">try{if(localStorage.getItem('pikminDecoTheme_v1')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 </head>
 <body>
 
@@ -338,7 +345,7 @@
   <div class="fold"><div>
   <h1>
     <span class="title"><span class="emoji">🌺</span>피크민 데코 컬렉션</span>
-    <button id="editToggle">✏️ 편집</button>
+    <span class="head-btns"><button type="button" id="themeToggle"></button><button id="editToggle">✏️ 편집</button></span>
   </h1>
   </div></div>
   <div class="overview">
@@ -2354,6 +2361,28 @@
       }
     });
   }
+
+  // 화면 모드(라이트/다크): 기기에 저장하며 기본은 라이트. 처음 적용은 head의 theme-boot가 한다.
+  var THEME_KEY = 'pikminDecoTheme_v1';
+  var themeBtn = document.getElementById('themeToggle');
+  function isDarkTheme(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
+  var MOON_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  var SUN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/>' +
+    '<path d="M12 2v2M12 20v2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2 12h2M20 12h2M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5"/></svg>';
+  function syncThemeBtn(){
+    var label = isDarkTheme() ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기';
+    themeBtn.innerHTML = isDarkTheme() ? SUN_ICON : MOON_ICON;
+    themeBtn.title = label;
+    themeBtn.setAttribute('aria-label', label);
+  }
+  themeBtn.addEventListener('click', function(){
+    var dark = !isDarkTheme();
+    if(dark) document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light'); } catch(e){}
+    syncThemeBtn();
+  });
+  syncThemeBtn();
 
   document.getElementById('editToggle').addEventListener('click', function(){
     editMode = !editMode;
